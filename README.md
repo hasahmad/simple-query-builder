@@ -1,2 +1,3 @@
 # simple-query-builder
-A simple query builder in Typescript
+
+Learning to build a simple query builder in Typescript
