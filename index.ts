@@ -41,11 +41,11 @@ type Field = {[alias: string]: string | BaseQueryBuilder} | string;
 type Fields = Array<Field> | ISTAR;
 type Wheres = Array<IWHERE>;
 type OP = '=' | '!=' | '<>' | '>' | '>=' | '<' | '<=' | 'LIKE' | 'IN' | 'IS' | 'IS NOT';
-type Val = string | number | Array<any> | BaseQueryBuilder;
+type Val = string | number | Array<any> | BaseQueryBuilder | null;
 interface IWHERE {
   where: string | BaseQueryBuilder;
   op: OP;
-  val: Val | null;
+  val: Val;
   type: 'AND' | 'OR';
   raw?: boolean;
 }
@@ -58,7 +58,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
   private _orders: Array<string>;
   private _havings: Wheres;
   private _limit?: number;
-  private _offset?: number;
+  private _offset: number = 0;
 
   constructor(
     tables: Array<TableName> = [],
@@ -68,7 +68,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     havings: Wheres = [],
     orders: Array<string> = [],
     limit?: number,
-    offset?: number,
+    offset: number = 0,
   ) {
     super();
     this._tables = tables;
@@ -131,7 +131,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     return this;
   }
 
-  limit(limit: number, offset?: number) {
+  limit(limit: number, offset: number = 0) {
     this._limit = limit;
     this._offset = offset;
     return this;
@@ -253,7 +253,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
       return `${this._limit}`;
     }
 
-    return `${this._limit} ${this._offset}`;
+    return `${this._offset} ${this._limit}`;
   }
 }
 
