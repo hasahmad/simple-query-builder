@@ -249,7 +249,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
   }
 
   private parseLimit() {
-    if (typeof this._offset === 'undefined' || !isNaN(this._offset)) {
+    if (typeof this._offset === 'undefined' || isNaN(this._offset)) {
       return `${this._limit}`;
     }
 
