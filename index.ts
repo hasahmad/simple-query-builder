@@ -104,17 +104,17 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     return this;
   }
 
-  where(where: string, op: OP = "=", val?: string | number | Array<any> | QueryBuilder, raw: boolean = false) {
+  where(where: string, op: OP = "=", val?: Val, raw: boolean = false) {
     this._wheres.push({where, val, op, type: 'AND', raw});
     return this;
   }
 
-  orWhere(where: string, op: OP = "=", val: string | number | Array<any> | QueryBuilder, raw: boolean = false) {
+  orWhere(where: string, op: OP = "=", val?: Val, raw: boolean = false) {
     this._wheres.push({where, val, op, type: 'OR', raw});
     return this;
   }
 
-  having(where: string, op: OP = "=", val: string | number | Array<any> | QueryBuilder, raw: boolean = false) {
+  having(where: string, op: OP = "=", val?: Val, raw: boolean = false) {
     this._havings.push({where, val, op, type: 'AND', raw});
     return this;
   }
