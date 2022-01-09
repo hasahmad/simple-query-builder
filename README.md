@@ -137,7 +137,7 @@ WHERE (users.user_id >= 20)
 ``` typescript
 const deleteQuery = QueryBuilder
   .delete('users')
-  .join({'ur': 'user_roles'}, 'ur.user_id = users.user_id')
+  .join('user_roles AS ur', 'ur.user_id = users.user_id')
   .where('users.user_id', '>=', 20)
   .where('ur.role_id', '=', 15);
 ```
