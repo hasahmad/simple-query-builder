@@ -11,7 +11,8 @@ import {
 import { STAR } from './constants';
 import InvalidTableNameError from './InvalidTableNameError';
 import InvalidLimitError from './InvalidLimitError';
-import InvalidValidError from './InvalidValidError';
+import InvalidValueError from './InvalidValueError';
+import NotBetween from './statements/NotBetween';
 
 export default class Select implements IQueryBuilder {
   private _tables: Array<TableName>;
@@ -181,7 +182,7 @@ export default class Select implements IQueryBuilder {
     let result = "";
     if (typeof w.where === 'string') {
       if (w.val === undefined) {
-        throw new InvalidValidError();
+        throw new InvalidValueError();
       }
 
       result = `(${w.where} ${w.op} ${this.parseValue(w.val, w.op, w.raw)})`;
@@ -191,16 +192,16 @@ export default class Select implements IQueryBuilder {
     return !prepend ? result : `${w.type} ${result}`;
   }
 
-  private parseValue(val: Val, op?: string, raw: boolean = false) {
+  private parseValue(val: Val, op?: OP, raw: boolean = false) {
     return typeof val === 'number' || raw
-    ? `${val}`
-    : val === null || (typeof val === 'string' && val.toLowerCase() === 'null')
-    ? `NULL`
-    : (typeof val === 'object' && Array.isArray(val)) || op === 'IN'
-    ? `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`
-    : typeof val === 'object' && val.build
-    ? `${val.build()}`
-    : `'${val}'`;
+      ? `${val}`
+      : val === null || (typeof val === 'string' && val.toLowerCase() === 'null')
+      ? `NULL`
+      : (typeof val === 'object' && Array.isArray(val)) || op === 'IN' || op === 'NOT IN'
+      ? `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`
+      : typeof val === 'object' && val.build
+      ? `${val.build()}`
+      : `'${val}'`;
   }
 
   private parseGroupBys() {
