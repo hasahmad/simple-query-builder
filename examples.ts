@@ -45,6 +45,37 @@ console.log(
  */
 
 console.log("\n", Array(100).fill("*").join(""), "\n");
+const insertQuery = QueryBuilder
+  .insert('users')
+  .data([
+    {
+      user_id: 100,
+      username: 'user100',
+      email: 'user100@gmail.com',
+      password: 'SOME HASH',
+    },
+    {
+      user_id: 101,
+      username: 'user101',
+      email: 'user101@gmail.com',
+      password: 'SOME HASH',
+    },
+  ])
+  .join({'ur': 'user_roles'}, 'ur.user_id = users.user_id')
+  .where('users.user_id', '>=', 20)
+  .where('ur.role_id', '=', 15);
+
+console.log(
+  insertQuery.build(),
+  insertQuery.build() === "INSERT INTO users (user_id, username, email, password) VALUES (100,'user100','user100@gmail.com','SOME HASH'), (101,'user101','user101@gmail.com','SOME HASH') INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)"
+);
+ /**
+  * Output:
+  * 
+  * INSERT INTO users (user_id, username, email, password) VALUES (100,'user100','user100@gmail.com','SOME HASH'), (101,'user101','user101@gmail.com','SOME HASH') INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)
+  */
+
+console.log("\n", Array(100).fill("*").join(""), "\n");
 const updateQuery = QueryBuilder
   .update('users')
   .set('users.removed_at', new Date(2022, 0, 8))
