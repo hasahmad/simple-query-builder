@@ -74,6 +74,27 @@ console.log(
   */
 
 console.log("\n", Array(100).fill("*").join(""), "\n");
+const insertQuerySelect = QueryBuilder
+  .insert('users')
+  .fields(['user_id', 'username', 'email', 'password', 'removed_at'])
+  .data(
+    QueryBuilder
+      .select(['NULL AS user_id', 'username', 'email', 'password', 'null as removed_at'])
+      .from('users')
+      .where('users.user_id', '=', 20)
+  );
+
+console.log(
+  insertQuerySelect.build(),
+  insertQuerySelect.build() === "INSERT INTO users (user_id, username, email, password, removed_at) VALUES (SELECT NULL AS user_id, username, email, password, null as removed_at FROM users WHERE (users.user_id = 20))"
+);
+ /**
+  * Output:
+  * 
+  * INSERT INTO users (user_id, username, email, password, removed_at) VALUES (SELECT NULL AS user_id, username, email, password, null as removed_at FROM users WHERE (users.user_id = 20))
+  */
+
+console.log("\n", Array(100).fill("*").join(""), "\n");
 const updateQuery = QueryBuilder
   .update('users')
   .set('users.removed_at', new Date(2022, 0, 8))
@@ -91,18 +112,18 @@ console.log(
  * UPDATE users SET users.removed_at = '2022-01-08T05:00:00.000Z' INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)
  */
 
- console.log("\n", Array(100).fill("*").join(""), "\n");
- const deleteQuery = QueryBuilder
-   .delete('users')
-   .join('user_roles AS ur', 'ur.user_id = users.user_id')
-   .where('users.user_id', '>=', 20)
-   .where('ur.role_id', '=', 15);
- 
- console.log(
-   deleteQuery.build(),
-   deleteQuery.build() === "DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)"
-  );
- /**
+console.log("\n", Array(100).fill("*").join(""), "\n");
+const deleteQuery = QueryBuilder
+  .delete('users')
+  .join('user_roles AS ur', 'ur.user_id = users.user_id')
+  .where('users.user_id', '>=', 20)
+  .where('ur.role_id', '=', 15);
+
+console.log(
+  deleteQuery.build(),
+  deleteQuery.build() === "DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)"
+);
+/**
   * Output:
   * 
   * DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)

@@ -107,6 +107,34 @@ WHERE (users.user_id >= 20)
 
 ---
 
+``` typescript
+const insertQuerySelect = QueryBuilder
+  .insert('users')
+  .fields(['user_id', 'username', 'email', 'password', 'removed_at'])
+  .data(
+    QueryBuilder
+      .select(['NULL AS user_id', 'username', 'email', 'password', 'null as removed_at'])
+      .from('users')
+      .where('users.user_id', '=', 20)
+  );
+```
+
+``` sql
+INSERT INTO users (user_id, username, email, password, removed_at)
+VALUES (
+    SELECT NULL AS user_id,
+      username,
+      email,
+      password,
+      null as removed_at
+    FROM users
+    WHERE (users.user_id = 20)
+  )
+```
+
+
+---
+
 # Update Query
 
 ``` typescript
