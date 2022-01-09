@@ -3,10 +3,14 @@ import From from "./From";
 import Where from "./Where";
 
 export default class Join implements IQueryBuilder {
-  private _join: IJoin;
+  private table: TableName;
+  private on: JoinOn;
+  private type: JoinType;
 
   constructor(table: TableName, on: JoinOn, type: JoinType = 'INNER') {
-    this._join = {table, on, type};
+    this.table = table;
+    this.on = on;
+    this.type = type;
   }
 
   public build() {
@@ -15,11 +19,11 @@ export default class Join implements IQueryBuilder {
 
   private parseJoin() {
     return [
-      `${this._join.type}`,
+      `${this.type}`,
       'JOIN',
-      From.parseTableName(this._join.table),
+      From.parseTableName(this.table),
       'ON',
-      Join.parseJoinOn(this._join.on)
+      Join.parseJoinOn(this.on)
     ].join(' ');
   }
 

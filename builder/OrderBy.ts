@@ -1,10 +1,10 @@
 import { IQueryBuilder } from "../types";
 
 export default class OrderBy implements IQueryBuilder {
-  private _order_by: string;
+  private order_by: string;
 
   constructor(order_by: string) {
-    this._order_by = order_by;
+    this.order_by = order_by;
   }
 
   public build() {
@@ -12,6 +12,6 @@ export default class OrderBy implements IQueryBuilder {
   }
 
   private parseOrderBy() {
-    return this._order_by;
+    return this.order_by;
   }
 }

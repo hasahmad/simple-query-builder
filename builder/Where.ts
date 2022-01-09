@@ -3,15 +3,29 @@ import { Between, BetweenValue, In, InValue, IsNotNull, IsNull, IsNullValue, Lik
 import { IQueryBuilder, IWHERE, OP, Val, WhereType } from "../types";
 
 export default class Where implements IQueryBuilder {
-  private _where: IWHERE;
+  private where: string | IQueryBuilder;
+  private op: OP;
+  private val?: Val;
+  private type: WhereType;
+  private raw: boolean;
 
   constructor(where: string | IQueryBuilder, op: OP = "=", val?: Val, type: WhereType = 'AND', raw: boolean = false) {
-    this._where = {where, val, op, type: type, raw};
+    this.where = where;
+    this.op = op;
+    this.val = val;
+    this.type = type;
+    this.raw = raw;
     return this;
   }
 
   public build(prepend = true) {
-    return Where.parseWhere(this._where, prepend);
+    return Where.parseWhere({
+      where: this.where,
+      val: this.val,
+      op: this.op,
+      type: this.type,
+      raw: this.raw
+    } as IWHERE, prepend);
   }
 
   static parseWhere(w: IWHERE, prepend = true) {

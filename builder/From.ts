@@ -3,22 +3,22 @@ import { IQueryBuilder, TableName } from "../types";
 
 export default class From implements IQueryBuilder {
   protected static predicate: string = "FROM";
-  private _tables: Array<TableName>;
+  private tables: Array<TableName>;
 
   constructor(tables: TableName | Array<TableName>) {
-    this._tables = [];
+    this.tables = [];
     this.addTables(tables);
   }
 
   getTables() {
-    return this._tables;
+    return this.tables;
   }
 
   addTables(tables: TableName | Array<TableName>) {
     if (typeof tables === 'object' && Array.isArray(tables)) {
-      this._tables = this._tables.concat(tables);
+      this.tables = this.tables.concat(tables);
     } else {
-      this._tables.push(tables);
+      this.tables.push(tables);
     }
   }
 
@@ -27,11 +27,11 @@ export default class From implements IQueryBuilder {
   }
 
   private parseTables() {
-    if (!this._tables || !this._tables.length) {
+    if (!this.tables || !this.tables.length) {
       throw new InvalidTableNameError();
     }
 
-    return this._tables.map(From.parseTableName).join(', ');
+    return this.tables.map(From.parseTableName).join(', ');
   }
 
   static parseTableName(t: TableName) {

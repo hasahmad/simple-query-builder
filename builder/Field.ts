@@ -1,14 +1,14 @@
 import { Field as Col, IQueryBuilder, TableName } from "../types";
 
 export default class Field implements IQueryBuilder {
-  private _field: Col;
+  private field: Col;
 
   constructor(field: Col) {
-    this._field = field;
+    this.field = field;
   }
 
   public build() {
-    return Field.parseField(this._field);
+    return Field.parseField(this.field);
   }
 
   static parseField(f: Col) {
