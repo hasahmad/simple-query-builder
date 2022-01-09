@@ -4,7 +4,7 @@ Learning to build a simple query builder in Typescript
 
 # Check examples.ts
 
-``` sql
+``` typescript
 import { Where } from './builder';
 import QueryBuilder from './QueryBuilder';
 
