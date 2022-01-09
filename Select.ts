@@ -5,7 +5,7 @@ import {
   Val,
   JoinOn,
   JoinType,
-  Field as Col,
+  Col,
 } from './types';
 import { STAR } from './constants';
 import InvalidTableNameError from './exceptions/InvalidTableNameError';

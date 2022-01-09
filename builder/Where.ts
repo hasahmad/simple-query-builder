@@ -1,13 +1,33 @@
 import InvalidValueError from "../exceptions/InvalidValueError";
 import { Between, BetweenValue, In, InValue, IsNotNull, IsNull, IsNullValue, Like, LikeValue, NotBetween, NotIn, NotLike } from "../statements";
-import { IQueryBuilder, IWHERE, OP, Val, WhereType } from "../types";
+import { IQueryBuilder } from "../interfaces/IQueryBuilder";
 
-export default class Where implements IQueryBuilder {
-  private where: string | IQueryBuilder;
-  private op: OP;
-  private val?: Val;
-  private type: WhereType;
-  private raw: boolean;
+export type OP = 
+  '=' | '!=' | '<>'
+  | '>' | '>='
+  | '<' | '<='
+  | 'BETWEEN' | 'NOT BETWEEN'
+  | 'LIKE' | 'NOT LIKE'
+  | 'IN' | 'NOT IN'
+  | 'IS NULL' | 'IS NOT NULL'
+  | 'IS' | 'IS NOT'
+  | 'NOT';
+export type Val = string | number | Date | Array<any> | IQueryBuilder | null;
+export type WhereType = 'AND' | 'OR';
+export interface IWHERE {
+  where: string | IQueryBuilder;
+  op?: OP;
+  val?: Val;
+  type: WhereType;
+  raw?: boolean;
+}
+
+export default class Where implements IQueryBuilder, IWHERE {
+  where: string | IQueryBuilder;
+  op?: OP;
+  val?: Val;
+  type: WhereType;
+  raw?: boolean;
 
   constructor(where: string | IQueryBuilder, op: OP = "=", val?: Val, type: WhereType = 'AND', raw: boolean = false) {
     this.where = where;

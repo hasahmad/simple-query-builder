@@ -1,11 +1,19 @@
-import { IQueryBuilder, IJoin, JoinOn, JoinType, TableName } from "../types";
-import From from "./From";
+import { IQueryBuilder } from "../interfaces/IQueryBuilder";
+import From, { TableName } from "./From";
 import Where from "./Where";
 
-export default class Join implements IQueryBuilder {
-  private table: TableName;
-  private on: JoinOn;
-  private type: JoinType;
+export type JoinOn = string | Where | Array<Where>;
+export type JoinType = "INNER" | "OUTER" | "LEFT" | "RIGHT";
+export interface IJoin {
+  table: TableName;
+  on: JoinOn;
+  type: JoinType;
+};
+
+export default class Join implements IQueryBuilder, IJoin {
+  table: TableName;
+  on: JoinOn;
+  type: JoinType;
 
   constructor(table: TableName, on: JoinOn, type: JoinType = 'INNER') {
     this.table = table;
@@ -32,10 +40,10 @@ export default class Join implements IQueryBuilder {
 
     if (Array.isArray(on)) {
       return `(${on.map((w, i) => {
-        return Where.parseWhere(w, i !== 0);
+        return w.build(i !== 0);
       }).join(' ')})`;
     }
 
-    return `(${Where.parseWhere(on, false)})`;
+    return `(${on.build(false)})`;
   }
 }

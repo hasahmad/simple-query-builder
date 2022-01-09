@@ -1,4 +1,4 @@
-import { Field as Col } from './types';
+import { Col } from './types';
 import Select from './Select';
 import { STAR } from './constants';
 import { Field } from './builder';

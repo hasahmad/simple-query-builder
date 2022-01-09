@@ -1,4 +1,8 @@
-import { Field as Col, IQueryBuilder, TableName } from "../types";
+import { ISTAR } from "../constants";
+import { IQueryBuilder } from "../interfaces/IQueryBuilder";
+
+export type Col = {[alias: string]: string | IQueryBuilder} | string;
+export type Fields = Array<Field> | ISTAR;
 
 export default class Field implements IQueryBuilder {
   private field: Col;

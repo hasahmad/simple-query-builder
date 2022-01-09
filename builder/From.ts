@@ -1,5 +1,7 @@
 import InvalidTableNameError from "../exceptions/InvalidTableNameError";
-import { IQueryBuilder, TableName } from "../types";
+import { IQueryBuilder } from "../interfaces/IQueryBuilder";
+
+export type TableName = {[alias: string]: string | IQueryBuilder} | string;
 
 export default class From implements IQueryBuilder {
   protected static predicate: string = "FROM";
