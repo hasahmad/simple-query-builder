@@ -1,6 +1,6 @@
-# simple-query-builder
+# Simple SQL Query Builder
 
-Learning to build a simple query builder in Typescript
+Learning to build a simple SQL Query Builder in Typescript
 
 # Check examples.ts
 
