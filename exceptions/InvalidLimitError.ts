@@ -1,5 +1,5 @@
 export default class InvalidLimitError extends Error {
-  constructor() {
-    super("Invalid Limit");
+  constructor(value?: any) {
+    super(`Invalid limit. Must be a number${value ? ', provided (' + value + ')' : ''}`);
   }
 }

@@ -23,7 +23,7 @@ export default class Between implements IStatement {
     }
     if (Array.isArray(this.values)) {
       if (this.values.length > 2) {
-        throw new InvalidValueError();
+        throw new InvalidValueError('must be array if length 2');
       }
       return this.values.map(this.parseValue).join(' AND ');
     }
@@ -40,7 +40,7 @@ export default class Between implements IStatement {
     }
     if (val instanceof Date) {
       if (Object.prototype.toString.call(val) !== "[object Date]") {
-        throw new InvalidValueError();
+        throw new InvalidValueError(val);
       }
       return `'${val.toISOString()}'`;
     }

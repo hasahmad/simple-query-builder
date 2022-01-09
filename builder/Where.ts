@@ -105,7 +105,7 @@ export default class Where implements IQueryBuilder, IWHERE {
 
     if (val instanceof Date) {
       if (Object.prototype.toString.call(val) !== "[object Date]") {
-        throw new InvalidValueError();
+        throw new InvalidValueError(val);
       }
       return `'${val.toISOString()}'`;
     }

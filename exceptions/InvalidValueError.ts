@@ -1,5 +1,5 @@
 export default class InvalidValueError extends Error {
-  constructor() {
-    super("Invalid value");
+  constructor(value?: any) {
+    super(`Invalid value${value ? ' (' + value + ')' : ''}`);
   }
 }

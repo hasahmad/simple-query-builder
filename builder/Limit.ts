@@ -15,8 +15,8 @@ export default class Limit implements IQueryBuilder {
   }
 
   private parseLimit() {
-    if (typeof this._limit !== 'number') {
-      throw new InvalidLimitError();
+    if (typeof this._limit !== 'number' || isNaN(this._limit)) {
+      throw new InvalidLimitError(this._limit);
     }
 
     if (typeof this._offset === 'undefined' || isNaN(this._offset)) {

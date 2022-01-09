@@ -1,5 +1,5 @@
 export default class InvalidTableNameError extends Error {
-  constructor() {
-    super("Invalid Table Name");
+  constructor(value?: any) {
+    super(`Invalid Table Name${value ? ', provided (' + value + ')' : ''}`);
   }
 }
