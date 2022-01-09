@@ -221,12 +221,12 @@ export default class Select implements IQueryBuilder {
     if (typeof on === 'string') { return on; }
 
     if (Array.isArray(on)) {
-      return on.map((w, i) => {
+      return `(${on.map((w, i) => {
         return this.parseWhere(w, i !== 0);
-      }).join(' ')
+      }).join(' ')})`;
     }
 
-    return this.parseWhere(on, false);
+    return `(${this.parseWhere(on, false)})`;
   }
 
   private parseJoins() {
