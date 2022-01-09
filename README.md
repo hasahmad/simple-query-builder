@@ -94,19 +94,15 @@ const insertQuery = QueryBuilder
       password: 'SOME HASH',
     },
   ])
-  .join({'ur': 'user_roles'}, 'ur.user_id = users.user_id')
   .where('users.user_id', '>=', 20)
   .where('ur.role_id', '=', 15);
 ```
 
 ``` sql
 INSERT INTO users (user_id, username, email, password)
-VALUES
-  (100, 'user100', 'user100@gmail.com', 'SOME HASH'),
+VALUES (100, 'user100', 'user100@gmail.com', 'SOME HASH'),
   (101, 'user101', 'user101@gmail.com', 'SOME HASH')
-  INNER JOIN user_roles AS ur ON ur.user_id = users.user_id
 WHERE (users.user_id >= 20)
-  AND (ur.role_id = 15)
 ```
 
 ---
