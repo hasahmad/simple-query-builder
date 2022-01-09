@@ -1,4 +1,4 @@
-import { From, Join, Where } from "./builder";
+import { Field, From, Join, Where } from "./builder";
 import Set from "./builder/Set";
 import InvalidValueError from "./exceptions/InvalidValueError";
 import Query from "./Query";
@@ -12,8 +12,9 @@ export default class Update extends Query {
     sets: Array<Set> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
+    returning: Array<Field> = [],
   ) {
-    super('UPDATE', [], [], wheres, joins);
+    super('UPDATE', [], [], wheres, joins, [], [], [], returning);
     if (table) {
       if (table instanceof From) {
         this._tables = [table];
@@ -23,8 +24,6 @@ export default class Update extends Query {
     }
 
     this._sets = sets;
-    this._wheres = wheres;
-    this._joins = joins;
   }
 
   build(): string {
@@ -44,6 +43,12 @@ export default class Update extends Query {
       result.push(
         this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
       )
+    }
+    if (this._returning.length) {
+      result.push("RETURNING");
+      result.push(
+        this._returning.map(v => v.build()).join(', ')
+      );
     }
 
     return result.join(' ');

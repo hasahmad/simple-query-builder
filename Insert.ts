@@ -13,8 +13,9 @@ export default class Insert extends Query {
     fields: Array<Field> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
+    returning: Array<Field> = [],
   ) {
-    super('INSERT', [], fields, wheres, joins);
+    super('INSERT', [], fields, wheres, joins, [], [], [], returning);
     if (table) {
       if (table instanceof From) {
         this._tables = [table];
@@ -50,14 +51,21 @@ export default class Insert extends Query {
     if (this._joins.length) {
       result.push(
         this._joins.map(v => v.build()).join(' ')
-      )
+      );
     }
 
     if (this._wheres.length) {
       result.push("WHERE");
       result.push(
         this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
-      )
+      );
+    }
+
+    if (this._returning.length) {
+      result.push("RETURNING");
+      result.push(
+        this._returning.map(v => v.build()).join(', ')
+      );
     }
 
     return result.join(' ');

@@ -30,6 +30,7 @@ export default class Query implements IQueryBuilder {
   protected _groups: Array<GroupBy>;
   protected _orders: Array<OrderBy>;
   protected _havings: Array<Having>;
+  protected _returning: Array<Field>;
 
   constructor(
     type: QueryType = "SELECT",
@@ -39,7 +40,8 @@ export default class Query implements IQueryBuilder {
     joins: Array<Join> = [],
     groups: Array<GroupBy> = [],
     orders: Array<OrderBy> = [],
-    havings: Array<Having> = []
+    havings: Array<Having> = [],
+    returning: Array<Field> = [],
   ) {
     this._type = type;
     if (typeof tables === 'string') {
@@ -53,6 +55,7 @@ export default class Query implements IQueryBuilder {
     this._groups = groups;
     this._orders = orders;
     this._havings = havings;
+    this._returning = returning;
   }
 
   type(type: QueryType) {
@@ -191,6 +194,23 @@ export default class Query implements IQueryBuilder {
     for (const o of orders) {
       this.order(o);
     }
+    return this;
+  }
+
+  returning(fields: Field | string | Array<string> | Array<Field>) {
+    if (Array.isArray(fields)) {
+      for (const f of fields) {
+        this.returning(f);
+      }
+      return this;
+    }
+
+    if (fields instanceof Field) {
+      this._returning.push(fields);
+    } else {
+      this._returning.push(new Field(fields));
+    }
+
     return this;
   }
 

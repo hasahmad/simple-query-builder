@@ -1,4 +1,4 @@
-import { From, Join, Where } from "./builder";
+import { Field, From, Join, Where } from "./builder";
 import Query from "./Query";
 import { TableName } from "./types";
 
@@ -10,8 +10,9 @@ export default class Delete extends Query {
     table?: From | TableName,
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
+    returning: Array<Field> = [],
   ) {
-    super('DELETE', [], [], wheres, joins);
+    super('DELETE', [], [], wheres, joins, [], [], [], returning);
     if (table) {
       if (table instanceof From) {
         this._tables = [table];
@@ -19,9 +20,6 @@ export default class Delete extends Query {
         this._tables = [new From(table)];
       }
     }
-
-    this._wheres = wheres;
-    this._joins = joins;
   }
 
   build(): string {
@@ -40,6 +38,12 @@ export default class Delete extends Query {
       result.push(
         this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
       )
+    }
+    if (this._returning.length) {
+      result.push("RETURNING");
+      result.push(
+        this._returning.map(v => v.build()).join(', ')
+      );
     }
 
     return result.join(' ');

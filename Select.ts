@@ -13,6 +13,7 @@ import Query from './Query';
 export default class Select extends Query {
   protected _limit?: Limit;
   protected _explain?: boolean;
+  protected _distinct?: boolean;
 
   constructor(
     tables: Array<From> | string = [],
@@ -24,10 +25,12 @@ export default class Select extends Query {
     havings: Array<Having> = [],
     limit?: Limit,
     explain: boolean = false,
+    distinct: boolean = false
   ) {
     super('SELECT', tables, fields, wheres, joins, groups, orders, havings);
     this._limit = limit;
     this._explain = explain;
+    this._distinct = distinct;
   }
 
   limit(limit: Limit | number, offset: number = 0) {
@@ -45,6 +48,11 @@ export default class Select extends Query {
     return this;
   }
 
+  distinct() {
+    this._distinct = true;
+    return this;
+  }
+
   build() {
     const result = [
       "SELECT",
@@ -52,6 +60,10 @@ export default class Select extends Query {
       "FROM",
       this._tables.map(v => v.build()).join(', '),
     ];
+
+    if (this._distinct) {
+      result.unshift("DISTINCT");
+    }
 
     if (this._explain) {
       result.unshift("EXPLAIN");
