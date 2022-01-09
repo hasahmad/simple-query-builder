@@ -1,8 +1,8 @@
 import { Field, From, Join, Where } from "./builder";
 import Query from "./Query";
-import { TableName } from "./types";
+import { IQueryBuilder, TableName } from "./types";
 
-export type IData = Array<Array<any> | any>;
+export type IData = Array<Array<any> | any> | IQueryBuilder;
 
 export default class Insert extends Query {
   protected _data: IData;
@@ -27,23 +27,32 @@ export default class Insert extends Query {
   }
 
   build(): string {
+    let data = "";
+    if (Array.isArray(this._data)) {
+      data = "(" + this._data.map(d => {
+        if (Array.isArray(d)) {
+          return d.map(v => Where.parseValue(v));
+        }
+        return Where.parseValue(d);
+      }).join('), (') + ")";
+    } else {
+      data = `(${this._data.build()})`;
+    }
+
     const result = [
       "INSERT INTO",
       this._tables[0].build(),
       this._fields.length > 0 ? `(${this._fields.map(v => v.build()).join(', ')})` : '',
       "VALUES",
-      "(" + this._data.map(d => {
-        if (Array.isArray(d)) {
-          return d.map(v => Where.parseValue(v));
-        }
-        return Where.parseValue(d);
-      }).join('), (') + ")"
+      data,
     ].filter(v => v.trim());
+
     if (this._joins.length) {
       result.push(
         this._joins.map(v => v.build()).join(' ')
       )
     }
+
     if (this._wheres.length) {
       result.push("WHERE");
       result.push(
@@ -58,7 +67,12 @@ export default class Insert extends Query {
     return this.table(table);
   }
 
-  data(data: Array<{[key: string]: any} | Array<any>>) {
+  data(data: Array<{[key: string]: any} | Array<any>> | IQueryBuilder) {
+    if (!Array.isArray(data)) {
+      this._data = data;
+      return this;
+    }
+
     if (typeof data[0] === 'object' &&
       !Array.isArray(data[0]) &&
       !this._fields.length
