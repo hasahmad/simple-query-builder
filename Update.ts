@@ -60,11 +60,32 @@ export default class Update implements IQueryBuilder {
     return this;
   }
 
-  set(set: Set | string, val: Val, raw: boolean = false) {
+  set(set: Set | Array<Set> | {[key: string]: Val} | string, val?: Val, raw: boolean = false) {
     if (set instanceof Set) {
       this._sets.push(set);
       return this;
     }
+
+    if (Array.isArray(set)) {
+      for (const s of set) {
+        this._sets.push(s);
+      }
+      return this;
+    }
+
+    if (typeof set === 'object') {
+      for (const key of Object.keys(set)) {
+        let k = key;
+        if (key.endsWith('__raw')) {
+          this._sets.push(new Set(k.replace('__raw', ''), set[k], true));
+        } else {
+          this._sets.push(new Set(k, set[k], raw));
+        }
+      }
+      return this;
+    }
+
+    if (!val) { throw new InvalidValueError(); }
 
     this._sets.push(new Set(set, val, raw));
     return this;
