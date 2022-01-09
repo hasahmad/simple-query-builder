@@ -1,17 +1,14 @@
 import { From, Join, Where } from "./builder";
-import Set from "./builder/Set";
 import InvalidValueError from "./exceptions/InvalidValueError";
 import { IQueryBuilder, JoinOn, JoinType, OP, TableName, Val } from "./types";
 
-export default class Update implements IQueryBuilder {
+export default class Delete implements IQueryBuilder {
   private _from: From;
-  private _sets: Array<Set>;
   private _wheres: Array<Where>;
   private _joins: Array<Join>;
 
   constructor(
     from?: From,
-    sets: Array<Set> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
@@ -21,17 +18,15 @@ export default class Update implements IQueryBuilder {
       this._from = from;
     }
 
-    this._sets = sets;
     this._wheres = wheres;
     this._joins = joins;
   }
 
   build(): string {
     const result = [
-      "UPDATE",
+      "DELETE",
+      "FROM",
       this._from.build(),
-      "SET",
-      this._sets.map(v => v.build()).join(', '),
     ];
     if (this._joins.length) {
       result.push(
@@ -55,16 +50,6 @@ export default class Update implements IQueryBuilder {
     }
 
     this._from.addTables(tables);
-    return this;
-  }
-
-  set(set: Set | string, val: Val, raw: boolean = false) {
-    if (set instanceof Set) {
-      this._sets.push(set);
-      return this;
-    }
-
-    this._sets.push(new Set(set, val, raw));
     return this;
   }
 

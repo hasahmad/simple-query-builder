@@ -56,3 +56,17 @@ console.log(updateQuery.build());
  * UPDATE users SET users.removed_at = '2022-01-08T05:00:00.000Z' INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)
  */
 
+ console.log("\n", Array(100).fill("*").join(""), "\n");
+ const deleteQuery = QueryBuilder
+   .delete('users')
+   .join({'ur': 'user_roles'}, 'ur.user_id = users.user_id')
+   .where('users.user_id', '>=', 20)
+   .where('ur.role_id', '=', 15);
+ 
+ console.log(deleteQuery.build());
+ /**
+  * Output:
+  * 
+  * DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)
+  */
+ 
