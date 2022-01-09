@@ -1,56 +1,19 @@
+import {
+  IQueryBuilder,
+  Field,
+  Fields,
+  IWHERE,
+  OP,
+  TableName,
+  Val,
+  Wheres,
+} from './types';
+import { STAR } from './constants';
+import InvalidTableNameError from './InvalidTableNameError';
+import InvalidLimitError from './InvalidLimitError';
+import InvalidValidError from './InvalidValidError';
 
-interface IBaseQueryBuilder {
-  build(): string;
-}
-
-class BaseQueryBuilder implements IBaseQueryBuilder {
-  build() {
-    return "";
-  }
-
-  toString() {
-    return this.build();
-  }
-}
-
-class QueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
-  select() {
-    return new SelectQueryBuilder();
-  }
-
-  build() {
-    return "";
-  }
-
-  toString() {
-    return this.build();
-  }
-}
-
-const STAR = "*";
-type ISTAR = typeof STAR;
-
-class InvalidTableNameError extends Error {
-  constructor() {
-    super("Invalid Table Name");
-  }
-}
-
-type TableName = {[alias: string]: string | BaseQueryBuilder} | string;
-type Field = {[alias: string]: string | BaseQueryBuilder} | string;
-type Fields = Array<Field> | ISTAR;
-type Wheres = Array<IWHERE>;
-type OP = '=' | '!=' | '<>' | '>' | '>=' | '<' | '<=' | 'LIKE' | 'IN' | 'IS' | 'IS NOT';
-type Val = string | number | Array<any> | BaseQueryBuilder | null;
-interface IWHERE {
-  where: string | BaseQueryBuilder;
-  op: OP;
-  val: Val;
-  type: 'AND' | 'OR';
-  raw?: boolean;
-}
-
-class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
+export default class Select implements IQueryBuilder {
   private _tables: Array<TableName>;
   private _fields: Fields;
   private _wheres: Wheres;
@@ -70,7 +33,6 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     limit?: number,
     offset: number = 0,
   ) {
-    super();
     this._tables = tables;
     this._fields = fields;
     this._wheres = wheres;
@@ -104,17 +66,17 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     return this;
   }
 
-  where(where: string | BaseQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  where(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
     this._wheres.push({where, val, op, type: 'AND', raw});
     return this;
   }
 
-  orWhere(where: string | BaseQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  orWhere(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
     this._wheres.push({where, val, op, type: 'OR', raw});
     return this;
   }
 
-  having(where: string | BaseQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  having(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
     this._havings.push({where, val, op, type: 'AND', raw});
     return this;
   }
@@ -161,7 +123,7 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
       result.push("ORDER BY");
       result.push(this.parseOrderBys());
     }
-    if (this._limit > 0) {
+    if (this._limit && this._limit > 0) {
       result.push("LIMIT");
       result.push(this.parseLimit());
     }
@@ -183,8 +145,8 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
       const k = Object.keys(f)[0];
       const val = f[k];
       return `${
-        val instanceof BaseQueryBuilder
-          ? "(" + val.build() + ")"
+        typeof val === 'string'
+          ? val
           : val
       } AS ${k}`;
     }).join(', ');
@@ -202,9 +164,9 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
       const k = Object.keys(t)[0];
       const val = t[k];
       return `${
-        val instanceof BaseQueryBuilder
-          ? "(" + val.build() + ")"
-          : val
+        typeof val === 'string'
+          ? val
+          : "(" + val.build() + ")"
       } AS ${k}`;
     }).join(', ');
   }
@@ -216,21 +178,28 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
   }
 
   private parseWhere(w: IWHERE, prepend = true) {
-    const result = w.where instanceof BaseQueryBuilder
-      ? `(${w.where.build()})`
-      : `(${w.where} ${w.op} ${this.parseValue(w.val, w.op, w.raw)})`;
+    let result = "";
+    if (typeof w.where === 'string') {
+      if (w.val === undefined) {
+        throw new InvalidValidError();
+      }
+
+      result = `(${w.where} ${w.op} ${this.parseValue(w.val, w.op, w.raw)})`;
+    } else {
+      result = `(${w.where.build()})`;
+    }
     return !prepend ? result : `${w.type} ${result}`;
   }
 
   private parseValue(val: Val, op?: string, raw: boolean = false) {
     return typeof val === 'number' || raw
     ? `${val}`
-    : (typeof val === 'object' && Array.isArray(val)) || op === 'IN'
-    ? `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`
-    : typeof val === 'object' && val instanceof BaseQueryBuilder
-    ? `${val.build()}`
     : val === null || (typeof val === 'string' && val.toLowerCase() === 'null')
     ? `NULL`
+    : (typeof val === 'object' && Array.isArray(val)) || op === 'IN'
+    ? `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`
+    : typeof val === 'object' && val.build
+    ? `${val.build()}`
     : `'${val}'`;
   }
 
@@ -249,6 +218,10 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
   }
 
   private parseLimit() {
+    if (typeof this._limit !== 'number') {
+      throw new InvalidLimitError();
+    }
+
     if (typeof this._offset === 'undefined' || isNaN(this._offset)) {
       return `${this._limit}`;
     }
@@ -256,26 +229,3 @@ class SelectQueryBuilder extends BaseQueryBuilder implements IBaseQueryBuilder {
     return `${this._offset} ${this._limit}`;
   }
 }
-
-
-const query = new SelectQueryBuilder()
-  .select(["u.user_id", "u.username", "ur.role_id"])
-  .from({ 'u': 'users' })
-  .from({ 'ur': 'user_roles' })
-  .from({
-    'up': (new SelectQueryBuilder())
-      .select()
-      .from({'p': 'permissions'})
-      .where('p.removed_at', 'IS', 'null')
-  })
-  .where('u.user_id', '=', 'ur.user_id', true)
-  .orWhere('u.role_id', 'IN', (new SelectQueryBuilder())
-    .select(["r.role_id"])
-    .from({'r': 'roles'})
-    .where('r.removed_at', 'IS', 'null')
-  )
-  .where('u.username', 'IS NOT', null)
-  ;
-
-console.log(query.build());
-
