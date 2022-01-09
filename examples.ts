@@ -1,4 +1,4 @@
-import { Where } from './builder';
+import { Where } from './statements';
 import QueryBuilder from './QueryBuilder';
 
 const query = QueryBuilder

@@ -1,4 +1,4 @@
-import { Field, From, Join, Where } from "./builder";
+import { Field, From, Join, Where } from "./statements";
 import Query from "./BaseQuery";
 import { TableName } from "./types";
 

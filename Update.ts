@@ -1,5 +1,4 @@
-import { Field, From, Join, Where } from "./builder";
-import Set from "./builder/Set";
+import { Field, From, Join, Where, Set } from "./statements";
 import InvalidValueError from "./exceptions/InvalidValueError";
 import Query from "./BaseQuery";
 import { TableName, Val } from "./types";
