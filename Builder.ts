@@ -3,7 +3,7 @@ import Select from './Select';
 import { STAR } from './constants';
 
 export default class QueryBuilder implements IQueryBuilder {
-  private _select: Select;
+  private _select?: Select;
 
   select(fields: Fields = STAR) {
     this._select = new Select();
