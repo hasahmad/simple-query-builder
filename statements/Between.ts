@@ -1,4 +1,4 @@
-import InvalidValueError from "../InvalidValueError";
+import InvalidValueError from "../exceptions/InvalidValueError";
 import { IQueryBuilder, IStatement } from "../types";
 
 type Val = string | number | Date | IQueryBuilder;

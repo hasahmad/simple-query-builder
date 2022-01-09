@@ -9,9 +9,9 @@ import {
   Wheres,
 } from './types';
 import { STAR } from './constants';
-import InvalidTableNameError from './InvalidTableNameError';
-import InvalidLimitError from './InvalidLimitError';
-import InvalidValueError from './InvalidValueError';
+import InvalidTableNameError from './exceptions/InvalidTableNameError';
+import InvalidLimitError from './exceptions/InvalidLimitError';
+import InvalidValueError from './exceptions/InvalidValueError';
 import {
   Between,
   NotBetween,
