@@ -69,4 +69,3 @@ console.log(updateQuery.build());
   * 
   * DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)
   */
- 

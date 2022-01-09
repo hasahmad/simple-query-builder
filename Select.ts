@@ -22,7 +22,7 @@ import {
 } from './builder';
 
 export default class Select implements IQueryBuilder {
-  private _from: From;
+  private _tables: Array<From>;
   private _fields: Array<Field>;
   private _wheres: Array<Where>;
   private _joins: Array<Join>;
@@ -33,7 +33,7 @@ export default class Select implements IQueryBuilder {
   private _explain?: boolean;
 
   constructor(
-    from?: From,
+    tables: Array<From> | string = [],
     fields: Array<Field> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
@@ -43,12 +43,11 @@ export default class Select implements IQueryBuilder {
     limit?: Limit,
     explain: boolean = false,
   ) {
-    if (!from) {
-      this._from = new From([]);
+    if (typeof tables === 'string') {
+      this._tables = [new From(tables)];
     } else {
-      this._from = from;
+      this._tables = tables;
     }
-
     this._fields = fields;
     this._wheres = wheres;
     this._joins = joins;
@@ -77,11 +76,17 @@ export default class Select implements IQueryBuilder {
 
   from(tables: From | TableName | Array<TableName>) {
     if (tables instanceof From) {
-      this._from.addTables(tables.getTables());
+      this._tables.push(tables);
       return this;
     }
 
-    this._from.addTables(tables);
+    if (Array.isArray(tables)) {
+      for (const t of tables) {
+        this.from(new From(t));
+      }
+    } else {
+      this.from(new From(tables));
+    }
     return this;
   }
 
@@ -198,7 +203,7 @@ export default class Select implements IQueryBuilder {
       "SELECT",
       this._fields.map(f => f.build()).join(', '),
       "FROM",
-      this._from.build(),
+      this._tables.map(v => v.build()).join(', '),
     ];
 
     if (this._explain) {

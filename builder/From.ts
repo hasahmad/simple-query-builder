@@ -5,35 +5,18 @@ export type TableName = {[alias: string]: string | IQueryBuilder} | string;
 
 export default class From implements IQueryBuilder {
   protected static predicate: string = "FROM";
-  private tables: Array<TableName>;
+  private table: TableName;
 
-  constructor(tables: TableName | Array<TableName>) {
-    this.tables = [];
-    this.addTables(tables);
-  }
-
-  getTables() {
-    return this.tables;
-  }
-
-  addTables(tables: TableName | Array<TableName>) {
-    if (typeof tables === 'object' && Array.isArray(tables)) {
-      this.tables = this.tables.concat(tables);
-    } else {
-      this.tables.push(tables);
-    }
+  constructor(table: TableName) {
+    this.table = table;
   }
 
   public build() {
-    return this.parseTables();
+    return this.parseTable();
   }
 
-  private parseTables() {
-    if (!this.tables || !this.tables.length) {
-      throw new InvalidTableNameError();
-    }
-
-    return this.tables.map(From.parseTableName).join(', ');
+  private parseTable() {
+    return From.parseTableName(this.table);
   }
 
   static parseTableName(t: TableName) {

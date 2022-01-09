@@ -4,21 +4,23 @@ import InvalidValueError from "./exceptions/InvalidValueError";
 import { IQueryBuilder, JoinOn, JoinType, OP, TableName, Val } from "./types";
 
 export default class Update implements IQueryBuilder {
-  private _from: From;
+  private _table!: From;
   private _sets: Array<Set>;
   private _wheres: Array<Where>;
   private _joins: Array<Join>;
 
   constructor(
-    from?: From,
+    table?: From | string,
     sets: Array<Set> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
-    if (!from) {
-      this._from = new From([]);
-    } else {
-      this._from = from;
+    if (table) {
+      if (typeof table === 'string') {
+        this._table = new From(table);
+      } else {
+        this._table = table;
+      }
     }
 
     this._sets = sets;
@@ -29,7 +31,7 @@ export default class Update implements IQueryBuilder {
   build(): string {
     const result = [
       "UPDATE",
-      this._from.build(),
+      this._table.build(),
       "SET",
       this._sets.map(v => v.build()).join(', '),
     ];
@@ -48,13 +50,13 @@ export default class Update implements IQueryBuilder {
     return result.join(' ');
   }
 
-  from(tables: From | TableName) {
-    if (tables instanceof From) {
-      this._from.addTables(tables.getTables());
+  from(table: From | TableName) {
+    if (table instanceof From) {
+      this._table = table;
       return this;
     }
 
-    this._from.addTables(tables);
+    this.from(new From(table));
     return this;
   }
 
