@@ -3,9 +3,6 @@ import Query from "./Query";
 import { TableName } from "./types";
 
 export default class Delete extends Query {
-  protected _wheres: Array<Where>;
-  protected _joins: Array<Join>;
-
   constructor(
     table?: From | TableName,
     wheres: Array<Where> = [],

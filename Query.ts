@@ -163,37 +163,37 @@ export default class Query implements IQueryBuilder {
     return this;
   }
 
-  group(groups: GroupBy | Array<GroupBy> | string | Array<string>) {
+  group(groups: GroupBy | Array<GroupBy> | string | Array<string> | IQueryBuilder | Array<IQueryBuilder>) {
+    if (Array.isArray(groups)) {
+      for (const g of groups) {
+        this.group(g);
+      }
+      return this;
+    }
+
     if (groups instanceof GroupBy) {
       this._groups.push(groups);
       return this;
     }
 
-    if (typeof groups === 'string') {
-      this._groups.push(new GroupBy(groups));
-      return this;
-    }
-
-    for (const g of groups) {
-      this.group(g);
-    }
+    this._groups.push(new GroupBy(groups));
     return this;
   }
 
-  order(orders: string | Array<string>) {
+  order(orders: OrderBy | Array<OrderBy> | string | Array<string> | IQueryBuilder | Array<IQueryBuilder>) {
+    if (Array.isArray(orders)) {
+      for (const o of orders) {
+        this.order(o);
+      }
+      return this;
+    }
+
     if (orders instanceof OrderBy) {
       this._orders.push(orders);
       return this;
     }
 
-    if (typeof orders === 'string') {
-      this._orders.push(new OrderBy(orders));
-      return this;
-    }
-
-    for (const o of orders) {
-      this.order(o);
-    }
+    this._orders.push(new OrderBy(orders));
     return this;
   }
 
