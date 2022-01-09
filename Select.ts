@@ -7,6 +7,9 @@ import {
   TableName,
   Val,
   Wheres,
+  Join,
+  JoinOn,
+  JoinType,
 } from './types';
 import { STAR } from './constants';
 import InvalidTableNameError from './exceptions/InvalidTableNameError';
@@ -31,6 +34,7 @@ export default class Select implements IQueryBuilder {
   private _tables: Array<TableName>;
   private _fields: Fields;
   private _wheres: Wheres;
+  private _joins: Array<Join>;
   private _groups: Array<string>;
   private _orders: Array<string>;
   private _havings: Wheres;
@@ -41,6 +45,7 @@ export default class Select implements IQueryBuilder {
     tables: Array<TableName> = [],
     fields: Fields = STAR,
     wheres: Wheres = [],
+    joins: Array<Join> = [],
     groups: Array<string> = [],
     havings: Wheres = [],
     orders: Array<string> = [],
@@ -50,6 +55,7 @@ export default class Select implements IQueryBuilder {
     this._tables = tables;
     this._fields = fields;
     this._wheres = wheres;
+    this._joins = joins;
     this._groups = groups;
     this._havings = havings;
     this._orders = orders;
@@ -78,6 +84,27 @@ export default class Select implements IQueryBuilder {
       this._tables.push(tables);
     }
     return this;
+  }
+
+  join(table: TableName, on: JoinOn, type: JoinType = 'INNER') {
+    this._joins.push({table, on, type});
+    return this;
+  }
+
+  joinInner(table: TableName, on: JoinOn) {
+    return this.join(table, on, 'INNER');
+  }
+
+  joinOuter(table: TableName, on: JoinOn) {
+    return this.join(table, on, 'OUTER');
+  }
+
+  joinLeft(table: TableName, on: JoinOn) {
+    return this.join(table, on, 'LEFT');
+  }
+
+  joinRight(table: TableName, on: JoinOn) {
+    return this.join(table, on, 'RIGHT');
   }
 
   where(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
@@ -121,6 +148,9 @@ export default class Select implements IQueryBuilder {
       this.parseTables(),
     ];
 
+    if (this._joins.length > 0) {
+      result.push(this.parseJoins());
+    }
     if (this._wheres.length > 0) {
       result.push("WHERE");
       result.push(this.parseWheres());
@@ -171,18 +201,48 @@ export default class Select implements IQueryBuilder {
       throw new InvalidTableNameError();
     }
 
-    return this._tables.map(t => {
-      if (typeof t === 'string') { return t; }
+    return this._tables.map(this.parseTableName).join(', ');
+  }
 
-      // { u: 'users' } => 'users as u'
-      const k = Object.keys(t)[0];
-      const val = t[k];
-      return `${
-        typeof val === 'string'
-          ? val
-          : "(" + val.build() + ")"
-      } AS ${k}`;
-    }).join(', ');
+  private parseTableName(t: TableName) {
+    if (typeof t === 'string') { return t; }
+
+    // { u: 'users' } => 'users as u'
+    const k = Object.keys(t)[0];
+    const val = t[k];
+    return `${
+      typeof val === 'string'
+        ? val
+        : "(" + val.build() + ")"
+    } AS ${k}`;
+  }
+
+  private parseJoinOn(on: JoinOn) {
+    if (typeof on === 'string') { return on; }
+
+    if (Array.isArray(on)) {
+      return on.map((w, i) => {
+        return this.parseWhere(w, i !== 0);
+      }).join(' ')
+    }
+
+    return this.parseWhere(on, false);
+  }
+
+  private parseJoins() {
+    if (!this._joins || !this._joins.length) {
+      throw new InvalidValueError();
+    }
+
+    return this._joins.map(j => {
+      return [
+        `${j.type}`,
+        'JOIN',
+        this.parseTableName(j.table),
+        'ON',
+        this.parseJoinOn(j.on)
+      ].join(' ');
+    }).join(' ');
   }
 
   private parseWheres() {

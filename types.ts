@@ -7,7 +7,6 @@ export interface IQueryBuilder {
 export type TableName = {[alias: string]: string | IQueryBuilder} | string;
 export type Field = {[alias: string]: string | IQueryBuilder} | string;
 export type Fields = Array<Field> | ISTAR;
-export type Wheres = Array<IWHERE>;
 export type OP = 
   '=' | '!=' | '<>'
   | '>' | '>='
@@ -26,6 +25,14 @@ export interface IWHERE {
   type: 'AND' | 'OR';
   raw?: boolean;
 }
+export type Wheres = Array<IWHERE>;
+export type JoinOn = string | IWHERE | Array<IWHERE>;
+export type JoinType = "INNER" | "OUTER" | "LEFT" | "RIGHT";
+export type Join = {
+  table: TableName;
+  on: JoinOn;
+  type: JoinType;
+};
 
 export interface IStatement {
   build(): string;
