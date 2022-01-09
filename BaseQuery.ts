@@ -21,7 +21,7 @@ import {
 
 export type QueryType = "SELECT" | "INSERT" | "UPDATE" | "DELETE";
 
-export default class Query implements IQueryBuilder {
+export default abstract class BaseQuery implements IQueryBuilder {
   protected _type: QueryType;
   protected _tables: Array<From>;
   protected _fields: Array<Field>;
@@ -214,9 +214,7 @@ export default class Query implements IQueryBuilder {
     return this;
   }
 
-  build() {
-    return "";
-  }
+  abstract build(): string
 
   toString() {
     return this.build();

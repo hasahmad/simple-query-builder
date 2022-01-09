@@ -1,7 +1,7 @@
 import { Field, From, Join, Where } from "./builder";
 import Set from "./builder/Set";
 import InvalidValueError from "./exceptions/InvalidValueError";
-import Query from "./Query";
+import Query from "./BaseQuery";
 import { TableName, Val } from "./types";
 
 export default class Update extends Query {

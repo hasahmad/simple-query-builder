@@ -1,5 +1,5 @@
 import { Field, From, Join, Where } from "./builder";
-import Query from "./Query";
+import Query from "./BaseQuery";
 import { IQueryBuilder, TableName } from "./types";
 
 export type IData = Array<Array<any> | any> | IQueryBuilder;

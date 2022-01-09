@@ -1,5 +1,5 @@
 import { Field, From, Join, Where } from "./builder";
-import Query from "./Query";
+import Query from "./BaseQuery";
 import { TableName } from "./types";
 
 export default class Delete extends Query {

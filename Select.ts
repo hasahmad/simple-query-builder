@@ -8,7 +8,7 @@ import {
   OrderBy,
   Limit,
 } from './builder';
-import Query from './Query';
+import Query from './BaseQuery';
 
 export default class Select extends Query {
   protected _limit?: Limit;
