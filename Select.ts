@@ -7,7 +7,7 @@ import {
   GroupBy,
   OrderBy,
   Limit,
-} from './builder';
+} from './statements';
 import Query from './BaseQuery';
 
 export default class Select extends Query {

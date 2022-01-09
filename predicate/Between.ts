@@ -1,10 +1,10 @@
 import InvalidValueError from "../exceptions/InvalidValueError";
-import { IQueryBuilder, IStatement } from "../types";
+import { IQueryBuilder, IPredicate } from "../types";
 
 type Val = string | number | Date | IQueryBuilder;
 export type Value = Array<Val> | string | IQueryBuilder;
 
-export default class Between implements IStatement {
+export default class Between implements IPredicate {
   protected predicate: string = "BETWEEN";
   private key: string;
   private values: Value;

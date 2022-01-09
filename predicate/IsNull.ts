@@ -1,8 +1,8 @@
-import { IStatement } from "../types";
+import { IPredicate } from "../types";
 
 export type Value = string | null;
 
-export default class IsNull implements IStatement {
+export default class IsNull implements IPredicate {
   protected predicate: string = "IS NULL";
   private key: string;
   private value?: Value;

@@ -17,7 +17,7 @@ import {
   Having,
   GroupBy,
   OrderBy,
-} from './builder';
+} from './statements';
 
 export type QueryType = "SELECT" | "INSERT" | "UPDATE" | "DELETE";
 

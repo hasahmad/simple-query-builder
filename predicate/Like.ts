@@ -1,9 +1,9 @@
-import { IQueryBuilder, IStatement } from "../types";
+import { IQueryBuilder, IPredicate } from "../types";
 
-export type Value = string | Array<any> | IQueryBuilder;
+export type Value = string | IQueryBuilder;
 
-export default class In implements IStatement {
-  protected predicate: string = "IN";
+export default class Like implements IPredicate {
+  protected predicate: string = "LIKE";
   private key: string;
   private value: Value;
   private raw: boolean = false;
@@ -16,10 +16,7 @@ export default class In implements IStatement {
 
   parseValue() {
     if (typeof this.value === 'string') {
-      return this.value;
-    }
-    if (Array.isArray(this.value)) {
-      return `('${this.value.join("', '")}')`;
+      return this.raw ? this.value : `'${this.value}'`;
     }
     return `(${this.value.build()})`;
   }

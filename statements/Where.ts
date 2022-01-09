@@ -1,5 +1,5 @@
 import InvalidValueError from "../exceptions/InvalidValueError";
-import { Between, BetweenValue, In, InValue, IsNotNull, IsNull, IsNullValue, Like, LikeValue, NotBetween, NotIn, NotLike } from "../statements";
+import { Between, BetweenValue, In, InValue, IsNotNull, IsNull, IsNullValue, Like, LikeValue, NotBetween, NotIn, NotLike } from "../predicate";
 import { IQueryBuilder } from "../interfaces/IQueryBuilder";
 
 export type OP = 
