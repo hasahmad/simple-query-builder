@@ -10,16 +10,16 @@ export default class Update implements IQueryBuilder {
   private _joins: Array<Join>;
 
   constructor(
-    table?: From | string,
+    table?: From | TableName,
     sets: Array<Set> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
     if (table) {
-      if (typeof table === 'string') {
-        this._table = new From(table);
-      } else {
+      if (table instanceof From) {
         this._table = table;
+      } else {
+        this._table = new From(table);
       }
     }
 

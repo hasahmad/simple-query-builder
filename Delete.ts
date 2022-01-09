@@ -8,15 +8,15 @@ export default class Delete implements IQueryBuilder {
   private _joins: Array<Join>;
 
   constructor(
-    table?: From,
+    table?: From | TableName,
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
     if (table) {
-      if (typeof table === 'string') {
-        this._table = new From(table);
-      } else {
+      if (table instanceof From) {
         this._table = table;
+      } else {
+        this._table = new From(table);
       }
     }
 
