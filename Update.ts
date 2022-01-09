@@ -1,13 +1,11 @@
 import { From, Join, Where } from "./builder";
 import Set from "./builder/Set";
 import InvalidValueError from "./exceptions/InvalidValueError";
-import { IQueryBuilder, JoinOn, JoinType, OP, TableName, Val } from "./types";
+import Query from "./Query";
+import { TableName, Val } from "./types";
 
-export default class Update implements IQueryBuilder {
-  private _table!: From;
-  private _sets: Array<Set>;
-  private _wheres: Array<Where>;
-  private _joins: Array<Join>;
+export default class Update extends Query {
+  protected _sets: Array<Set>;
 
   constructor(
     table?: From | TableName,
@@ -15,11 +13,12 @@ export default class Update implements IQueryBuilder {
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
+    super('UPDATE', [], [], wheres, joins);
     if (table) {
       if (table instanceof From) {
-        this._table = table;
+        this._tables = [table];
       } else {
-        this._table = new From(table);
+        this._tables = [new From(table)];
       }
     }
 
@@ -31,7 +30,7 @@ export default class Update implements IQueryBuilder {
   build(): string {
     const result = [
       "UPDATE",
-      this._table.build(),
+      this._tables[0].build(),
       "SET",
       this._sets.map(v => v.build()).join(', '),
     ];
@@ -52,7 +51,7 @@ export default class Update implements IQueryBuilder {
 
   from(table: From | TableName) {
     if (table instanceof From) {
-      this._table = table;
+      this._tables = [table];
       return this;
     }
 
@@ -88,55 +87,6 @@ export default class Update implements IQueryBuilder {
     if (!val) { throw new InvalidValueError(); }
 
     this._sets.push(new Set(set, val, raw));
-    return this;
-  }
-
-  join(join: Join | TableName, on?: JoinOn, type: JoinType = 'INNER') {
-    if (join instanceof Join) {
-      this._joins.push(join);
-      return this;
-    }
-    if (!on) {
-      throw new InvalidValueError();
-    }
-
-    this._joins.push(new Join(join, on, type));
-    return this;
-  }
-
-  joinInner(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'INNER');
-  }
-
-  joinOuter(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'OUTER');
-  }
-
-  joinLeft(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'LEFT');
-  }
-
-  joinRight(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'RIGHT');
-  }
-
-  where(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    if (where instanceof Where) {
-      this._wheres.push(where);
-      return this;
-    }
-
-    this._wheres.push(new Where(where, op, val, 'AND', raw));
-    return this;
-  }
-
-  orWhere(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    if (where instanceof Where) {
-      this._wheres.push(where);
-      return this;
-    }
-
-    this._wheres.push(new Where(where, op, val, 'OR', raw));
     return this;
   }
 }

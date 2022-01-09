@@ -1,49 +1,42 @@
-import { From, Join, Where } from "./builder";
-import InvalidValueError from "./exceptions/InvalidValueError";
-import { IQueryBuilder, JoinOn, JoinType, OP, TableName, Val } from "./types";
+import { Field, From, Join, Where } from "./builder";
+import Query from "./Query";
+import { TableName } from "./types";
 
 export type IData = Array<Array<any> | any>;
 
-export default class Insert implements IQueryBuilder {
-  private _table!: From;
-  private _data: IData;
-  private _fields: Array<string>;
-  private _wheres: Array<Where>;
-  private _joins: Array<Join>;
+export default class Insert extends Query {
+  protected _data: IData;
 
   constructor(
     table?: From | TableName,
     data: IData = [],
-    fields: Array<string> = [],
+    fields: Array<Field> = [],
     wheres: Array<Where> = [],
     joins: Array<Join> = [],
   ) {
+    super('INSERT', [], fields, wheres, joins);
     if (table) {
       if (table instanceof From) {
-        this._table = table;
+        this._tables = [table];
       } else {
-        this._table = new From(table);
+        this._tables = [new From(table)];
       }
     }
 
     this._data = data;
-    this._fields = fields;
-    this._wheres = wheres;
-    this._joins = joins;
   }
 
   build(): string {
     const result = [
       "INSERT INTO",
-      this._table.build(),
-      this._fields.length > 0 ? `(${this._fields.map(v => v).join(', ')})` : '',
+      this._tables[0].build(),
+      this._fields.length > 0 ? `(${this._fields.map(v => v.build()).join(', ')})` : '',
       "VALUES",
       "(" + this._data.map(d => {
         if (Array.isArray(d)) {
           return d.map(v => Where.parseValue(v));
-        } else {
-          return Where.parseValue(d)
         }
+        return Where.parseValue(d);
       }).join('), (') + ")"
     ].filter(v => v.trim());
     if (this._joins.length) {
@@ -61,16 +54,6 @@ export default class Insert implements IQueryBuilder {
     return result.join(' ');
   }
 
-  table(table: From | TableName) {
-    if (table instanceof From) {
-      this._table = table;
-      return this;
-    }
-
-    this.table(new From(table));
-    return this;
-  }
-
   into(table: From | TableName) {
     return this.table(table);
   }
@@ -80,12 +63,12 @@ export default class Insert implements IQueryBuilder {
       !Array.isArray(data[0]) &&
       !this._fields.length
     ) {
-      this._fields = Object.keys(data[0]);
+      this._fields = Object.keys(data[0]).map(v => new Field(v));
     }
 
     this._data = data.map(d => {
       if (typeof d === 'object' && !Array.isArray(d)) {
-        return this._fields.map(f => d[f]);
+        return this._fields.map(f => d[f.build()]);
       }
 
       return d;
@@ -93,57 +76,8 @@ export default class Insert implements IQueryBuilder {
     return this;
   }
 
-  fields(data: Array<string>) {
-    this._fields = data;
-    return this;
-  }
-
-  join(join: Join | TableName, on?: JoinOn, type: JoinType = 'INNER') {
-    if (join instanceof Join) {
-      this._joins.push(join);
-      return this;
-    }
-    if (!on) {
-      throw new InvalidValueError();
-    }
-
-    this._joins.push(new Join(join, on, type));
-    return this;
-  }
-
-  joinInner(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'INNER');
-  }
-
-  joinOuter(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'OUTER');
-  }
-
-  joinLeft(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'LEFT');
-  }
-
-  joinRight(table: Join | TableName, on?: JoinOn) {
-    return this.join(table, on, 'RIGHT');
-  }
-
-  where(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    if (where instanceof Where) {
-      this._wheres.push(where);
-      return this;
-    }
-
-    this._wheres.push(new Where(where, op, val, 'AND', raw));
-    return this;
-  }
-
-  orWhere(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    if (where instanceof Where) {
-      this._wheres.push(where);
-      return this;
-    }
-
-    this._wheres.push(new Where(where, op, val, 'OR', raw));
+  fields(fields: Array<string>) {
+    this._fields = fields.map(v => new Field(v));
     return this;
   }
 }
