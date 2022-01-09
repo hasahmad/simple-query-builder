@@ -12,7 +12,20 @@ import { STAR } from './constants';
 import InvalidTableNameError from './InvalidTableNameError';
 import InvalidLimitError from './InvalidLimitError';
 import InvalidValueError from './InvalidValueError';
-import NotBetween from './statements/NotBetween';
+import {
+  Between,
+  NotBetween,
+  In,
+  NotIn,
+  IsNull,
+  IsNotNull,
+  Like,
+  NotLike,
+  LikeValue,
+  IsNullValue,
+  InValue,
+  BetweenValue,
+} from './statements';
 
 export default class Select implements IQueryBuilder {
   private _tables: Array<TableName>;
@@ -181,11 +194,39 @@ export default class Select implements IQueryBuilder {
   private parseWhere(w: IWHERE, prepend = true) {
     let result = "";
     if (typeof w.where === 'string') {
-      if (w.val === undefined) {
+      if (w.val === undefined && !['IS NULL', 'IS NOT NULL',].includes(w.op || '')) {
         throw new InvalidValueError();
       }
 
-      result = `(${w.where} ${w.op} ${this.parseValue(w.val, w.op, w.raw)})`;
+      switch (w.op) {
+        case 'BETWEEN':
+          result = new Between(w.where, w.val as BetweenValue, w.raw).build();
+          break;
+        case 'NOT BETWEEN':
+          result = new NotBetween(w.where, w.val as BetweenValue, w.raw).build();
+          break;
+        case 'IS NULL':
+          result = new IsNull(w.where, w.val as IsNullValue, w.raw).build();
+          break;
+        case 'IS NOT NULL':
+          result = new IsNotNull(w.where, w.val as IsNullValue, w.raw).build();
+          break;
+        case 'LIKE':
+          result = new Like(w.where, w.val as LikeValue, w.raw).build();
+          break;
+        case 'NOT LIKE':
+          result = new NotLike(w.where, w.val as LikeValue, w.raw).build();
+          break;
+        case 'IN':
+          result = new In(w.where, w.val as InValue, w.raw).build();
+          break;
+        case 'NOT IN':
+          result = new NotIn(w.where, w.val as InValue, w.raw).build();
+          break;
+        default:
+          result = `(${w.where} ${w.op} ${this.parseValue(w.val as Val, w.op, w.raw)})`;
+          break;
+      }
     } else {
       result = `(${w.where.build()})`;
     }
@@ -193,15 +234,30 @@ export default class Select implements IQueryBuilder {
   }
 
   private parseValue(val: Val, op?: OP, raw: boolean = false) {
-    return typeof val === 'number' || raw
-      ? `${val}`
-      : val === null || (typeof val === 'string' && val.toLowerCase() === 'null')
-      ? `NULL`
-      : (typeof val === 'object' && Array.isArray(val)) || op === 'IN' || op === 'NOT IN'
-      ? `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`
-      : typeof val === 'object' && val.build
-      ? `${val.build()}`
-      : `'${val}'`;
+    if (typeof val === 'number' || raw) {
+      return `${val}`;
+    }
+
+    if (val === null || (typeof val === 'string' && val.toLowerCase() === 'null')) {
+      return `NULL`;
+    }
+
+    if ((typeof val === 'object' && Array.isArray(val)) || op === 'IN' || op === 'NOT IN') {
+      return `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`;
+    }
+
+    if (val instanceof Date) {
+      if (Object.prototype.toString.call(val) !== "[object Date]") {
+        throw new InvalidValueError();
+      }
+      return `'${val.toISOString()}'`;
+    }
+
+    if (typeof val === 'object' && val.build) {
+      return `${val.build()}`;
+    }
+
+    return `'${val}'`;
   }
 
   private parseGroupBys() {

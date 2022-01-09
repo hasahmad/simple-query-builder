@@ -15,9 +15,10 @@ export type OP =
   | 'BETWEEN' | 'NOT BETWEEN'
   | 'LIKE' | 'NOT LIKE'
   | 'IN' | 'NOT IN'
+  | 'IS NULL' | 'IS NOT NULL'
   | 'IS' | 'IS NOT'
   | 'NOT';
-export type Val = string | number | Array<any> | IQueryBuilder | null;
+export type Val = string | number | Date | Array<any> | IQueryBuilder | null;
 export interface IWHERE {
   where: string | IQueryBuilder;
   op?: OP;
