@@ -1,9 +1,10 @@
-import { Fields } from './types';
+import { Field as Col } from './types';
 import Select from './Select';
 import { STAR } from './constants';
+import { Field } from './builder';
 
 export default class QueryBuilder {
-  static select(fields: Fields = STAR) {
+  static select(fields: Array<Field | Col> = [STAR]) {
     return new Select().select(fields);
   }
 }

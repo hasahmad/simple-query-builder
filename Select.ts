@@ -1,175 +1,232 @@
 import {
   IQueryBuilder,
-  Field,
-  Fields,
-  IWHERE,
   OP,
   TableName,
   Val,
-  Wheres,
-  Join,
   JoinOn,
   JoinType,
+  Field as Col,
 } from './types';
 import { STAR } from './constants';
 import InvalidTableNameError from './exceptions/InvalidTableNameError';
-import InvalidLimitError from './exceptions/InvalidLimitError';
 import InvalidValueError from './exceptions/InvalidValueError';
 import {
-  Between,
-  NotBetween,
-  In,
-  NotIn,
-  IsNull,
-  IsNotNull,
-  Like,
-  NotLike,
-  LikeValue,
-  IsNullValue,
-  InValue,
-  BetweenValue,
-} from './statements';
+  From,
+  Field,
+  Where,
+  Join,
+  Having,
+  GroupBy,
+  OrderBy,
+  Limit,
+} from './builder';
 
 export default class Select implements IQueryBuilder {
-  private _tables: Array<TableName>;
-  private _fields: Fields;
-  private _wheres: Wheres;
+  private _from: From;
+  private _fields: Array<Field>;
+  private _wheres: Array<Where>;
   private _joins: Array<Join>;
-  private _groups: Array<string>;
-  private _orders: Array<string>;
-  private _havings: Wheres;
-  private _limit?: number;
-  private _offset: number = 0;
+  private _groups: Array<GroupBy>;
+  private _orders: Array<OrderBy>;
+  private _havings: Array<Having>;
+  private _limit?: Limit;
 
   constructor(
-    tables: Array<TableName> = [],
-    fields: Fields = STAR,
-    wheres: Wheres = [],
+    from?: From,
+    fields: Array<Field> = [],
+    wheres: Array<Where> = [],
     joins: Array<Join> = [],
-    groups: Array<string> = [],
-    havings: Wheres = [],
-    orders: Array<string> = [],
-    limit?: number,
-    offset: number = 0,
+    groups: Array<GroupBy> = [],
+    orders: Array<OrderBy> = [],
+    havings: Array<Having> = [],
+    limit?: Limit,
   ) {
-    this._tables = tables;
+    if (!from) {
+      this._from = new From([]);
+    } else {
+      this._from = from;
+    }
+
     this._fields = fields;
     this._wheres = wheres;
     this._joins = joins;
     this._groups = groups;
-    this._havings = havings;
     this._orders = orders;
+    this._havings = havings;
     this._limit = limit;
-    this._offset = offset;
   }
 
-  select(fields: Fields = STAR) {
-    this._fields = fields;
-    return this;
-  }
-
-  field(field: Field) {
-    if (this._fields === STAR) {
-      this._fields = [];
+  select(fields: Array<Field | Col> = [STAR]) {
+    for (const f of fields) {
+      this.field(f);
     }
-
-    this._fields.push(field);
     return this;
   }
 
-  from(tables: TableName | Array<TableName>) {
-    if (typeof tables === 'object' && Array.isArray(tables)) {
-      this._tables = this._tables.concat(tables);
+  field(field: Field | Col) {
+    if (field instanceof Field) {
+      this._fields.push(field);
     } else {
-      this._tables.push(tables);
+      this._fields.push(new Field(field));
     }
     return this;
   }
 
-  join(table: TableName, on: JoinOn, type: JoinType = 'INNER') {
-    this._joins.push({table, on, type});
+  from(tables: From | TableName | Array<TableName>) {
+    if (tables instanceof From) {
+      this._from.addTables(tables.getTables());
+      return this;
+    }
+
+    this._from.addTables(tables);
     return this;
   }
 
-  joinInner(table: TableName, on: JoinOn) {
+  join(join: Join | TableName, on?: JoinOn, type: JoinType = 'INNER') {
+    if (join instanceof Join) {
+      this._joins.push(join);
+      return this;
+    }
+    if (!on) {
+      throw new InvalidValueError();
+    }
+
+    this._joins.push(new Join(join, on, type));
+    return this;
+  }
+
+  joinInner(table: Join | TableName, on?: JoinOn) {
     return this.join(table, on, 'INNER');
   }
 
-  joinOuter(table: TableName, on: JoinOn) {
+  joinOuter(table: Join | TableName, on?: JoinOn) {
     return this.join(table, on, 'OUTER');
   }
 
-  joinLeft(table: TableName, on: JoinOn) {
+  joinLeft(table: Join | TableName, on?: JoinOn) {
     return this.join(table, on, 'LEFT');
   }
 
-  joinRight(table: TableName, on: JoinOn) {
+  joinRight(table: Join | TableName, on?: JoinOn) {
     return this.join(table, on, 'RIGHT');
   }
 
-  where(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    this._wheres.push({where, val, op, type: 'AND', raw});
+  where(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+    if (where instanceof Where) {
+      this._wheres.push(where);
+      return this;
+    }
+
+    this._wheres.push(new Where(where, op, val, 'AND', raw));
     return this;
   }
 
-  orWhere(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    this._wheres.push({where, val, op, type: 'OR', raw});
+  orWhere(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+    if (where instanceof Where) {
+      this._wheres.push(where);
+      return this;
+    }
+
+    this._wheres.push(new Where(where, op, val, 'OR', raw));
     return this;
   }
 
-  having(where: string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
-    this._havings.push({where, val, op, type: 'AND', raw});
+  having(where: Having | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+    if (where instanceof Having) {
+      this._havings.push(where);
+      return this;
+    }
+
+    this._havings.push(new Having(where, op, val, 'OR', raw));
     return this;
   }
 
-  group(groups: string | Array<string>) {
-    if (typeof groups === 'string') { this._groups.push(groups); }
-    this._groups = this._groups.concat(groups);
+  group(groups: GroupBy | Array<GroupBy> | string | Array<string>) {
+    if (groups instanceof GroupBy) {
+      this._groups.push(groups);
+      return this;
+    }
+
+    if (typeof groups === 'string') {
+      this._groups.push(new GroupBy(groups));
+      return this;
+    }
+
+    for (const g of groups) {
+      this.group(g);
+    }
     return this;
   }
 
   order(orders: string | Array<string>) {
-    if (typeof orders === 'string') { this._orders.push(orders); }
-    this._orders = this._orders.concat(orders);
+    if (orders instanceof OrderBy) {
+      this._orders.push(orders);
+      return this;
+    }
+
+    if (typeof orders === 'string') {
+      this._orders.push(new OrderBy(orders));
+      return this;
+    }
+
+    for (const o of orders) {
+      this.order(o);
+    }
     return this;
   }
 
-  limit(limit: number, offset: number = 0) {
-    this._limit = limit;
-    this._offset = offset;
+  limit(limit: Limit | number, offset: number = 0) {
+    if (limit instanceof Limit) {
+      this._limit = limit;
+      return this;
+    }
+
+    this._limit = new Limit(limit, offset);
     return this;
   }
 
   build() {
     const result = [
       "SELECT",
-      this.parseFields(),
+      this._fields.map(f => f.build()).join(', '),
       "FROM",
-      this.parseTables(),
+      this._from.build(),
     ];
 
     if (this._joins.length > 0) {
-      result.push(this.parseJoins());
+      result.push(
+        this._joins.map(v => v.build()).join(' ')
+      );
     }
     if (this._wheres.length > 0) {
       result.push("WHERE");
-      result.push(this.parseWheres());
+      result.push(
+        this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
+      );
     }
     if (this._groups.length > 0) {
       result.push("GROUP BY");
-      result.push(this.parseGroupBys());
+      result.push(
+        this._groups.map(v => v.build()).join(' ')
+      );
     }
     if (this._havings.length > 0) {
       result.push("HAVING");
-      result.push(this.parseHavings());
+      result.push(
+        this._havings.map((v, i) => v.build(i !== 0)).join(' ')
+      );
     }
     if (this._orders.length > 0) {
       result.push("ORDER BY");
-      result.push(this.parseOrderBys());
+      result.push(
+        this._orders.map(v => v.build()).join(' ')
+      );
     }
-    if (this._limit && this._limit > 0) {
+    if (this._limit) {
       result.push("LIMIT");
-      result.push(this.parseLimit());
+      result.push(
+        this._limit.build()
+      );
     }
 
     return result.join(' ');
@@ -177,172 +234,5 @@ export default class Select implements IQueryBuilder {
 
   toString() {
     return this.build();
-  }
-
-  private parseFields() {
-    if (this._fields === STAR) { return STAR; }
-
-    return this._fields.map(f => {
-      if (typeof f === 'string') { return f; }
-
-      // { user_id: 'u.id' } => 'u.id as user_id'
-      const k = Object.keys(f)[0];
-      const val = f[k];
-      return `${
-        typeof val === 'string'
-          ? val
-          : val
-      } AS ${k}`;
-    }).join(', ');
-  }
-
-  private parseTables() {
-    if (!this._tables || !this._tables.length) {
-      throw new InvalidTableNameError();
-    }
-
-    return this._tables.map(this.parseTableName).join(', ');
-  }
-
-  private parseTableName(t: TableName) {
-    if (typeof t === 'string') { return t; }
-
-    // { u: 'users' } => 'users as u'
-    const k = Object.keys(t)[0];
-    const val = t[k];
-    return `${
-      typeof val === 'string'
-        ? val
-        : "(" + val.build() + ")"
-    } AS ${k}`;
-  }
-
-  private parseJoinOn(on: JoinOn) {
-    if (typeof on === 'string') { return on; }
-
-    if (Array.isArray(on)) {
-      return `(${on.map((w, i) => {
-        return this.parseWhere(w, i !== 0);
-      }).join(' ')})`;
-    }
-
-    return `(${this.parseWhere(on, false)})`;
-  }
-
-  private parseJoins() {
-    if (!this._joins || !this._joins.length) {
-      throw new InvalidValueError();
-    }
-
-    return this._joins.map(j => {
-      return [
-        `${j.type}`,
-        'JOIN',
-        this.parseTableName(j.table),
-        'ON',
-        this.parseJoinOn(j.on)
-      ].join(' ');
-    }).join(' ');
-  }
-
-  private parseWheres() {
-    return this._wheres.map((w, i) => {
-      return this.parseWhere(w, i !== 0);
-    }).join(' ');
-  }
-
-  private parseWhere(w: IWHERE, prepend = true) {
-    let result = "";
-    if (typeof w.where === 'string') {
-      if (w.val === undefined && !['IS NULL', 'IS NOT NULL',].includes(w.op || '')) {
-        throw new InvalidValueError();
-      }
-
-      switch (w.op) {
-        case 'BETWEEN':
-          result = new Between(w.where, w.val as BetweenValue, w.raw).build();
-          break;
-        case 'NOT BETWEEN':
-          result = new NotBetween(w.where, w.val as BetweenValue, w.raw).build();
-          break;
-        case 'IS NULL':
-          result = new IsNull(w.where, w.val as IsNullValue, w.raw).build();
-          break;
-        case 'IS NOT NULL':
-          result = new IsNotNull(w.where, w.val as IsNullValue, w.raw).build();
-          break;
-        case 'LIKE':
-          result = new Like(w.where, w.val as LikeValue, w.raw).build();
-          break;
-        case 'NOT LIKE':
-          result = new NotLike(w.where, w.val as LikeValue, w.raw).build();
-          break;
-        case 'IN':
-          result = new In(w.where, w.val as InValue, w.raw).build();
-          break;
-        case 'NOT IN':
-          result = new NotIn(w.where, w.val as InValue, w.raw).build();
-          break;
-        default:
-          result = `(${w.where} ${w.op} ${this.parseValue(w.val as Val, w.op, w.raw)})`;
-          break;
-      }
-    } else {
-      result = `(${w.where.build()})`;
-    }
-    return !prepend ? result : `${w.type} ${result}`;
-  }
-
-  private parseValue(val: Val, op?: OP, raw: boolean = false) {
-    if (typeof val === 'number' || raw) {
-      return `${val}`;
-    }
-
-    if (val === null || (typeof val === 'string' && val.toLowerCase() === 'null')) {
-      return `NULL`;
-    }
-
-    if ((typeof val === 'object' && Array.isArray(val)) || op === 'IN' || op === 'NOT IN') {
-      return `(${Array.isArray(val) ? "'" + val.join("','") + "'" : val})`;
-    }
-
-    if (val instanceof Date) {
-      if (Object.prototype.toString.call(val) !== "[object Date]") {
-        throw new InvalidValueError();
-      }
-      return `'${val.toISOString()}'`;
-    }
-
-    if (typeof val === 'object' && val.build) {
-      return `${val.build()}`;
-    }
-
-    return `'${val}'`;
-  }
-
-  private parseGroupBys() {
-    return this._groups.join(', ');
-  }
-
-  private parseHavings() {
-    return this._havings.map((w, i) => {
-      return this.parseWhere(w, i !== 0);
-    }).join(' ');
-  }
-
-  private parseOrderBys() {
-    return this._orders.join(',');
-  }
-
-  private parseLimit() {
-    if (typeof this._limit !== 'number') {
-      throw new InvalidLimitError();
-    }
-
-    if (typeof this._offset === 'undefined' || isNaN(this._offset)) {
-      return `${this._limit}`;
-    }
-
-    return `${this._offset} ${this._limit}`;
   }
 }

@@ -18,17 +18,18 @@ export type OP =
   | 'IS' | 'IS NOT'
   | 'NOT';
 export type Val = string | number | Date | Array<any> | IQueryBuilder | null;
+export type WhereType = 'AND' | 'OR';
 export interface IWHERE {
   where: string | IQueryBuilder;
   op?: OP;
   val?: Val;
-  type: 'AND' | 'OR';
+  type: WhereType;
   raw?: boolean;
 }
 export type Wheres = Array<IWHERE>;
 export type JoinOn = string | IWHERE | Array<IWHERE>;
 export type JoinType = "INNER" | "OUTER" | "LEFT" | "RIGHT";
-export type Join = {
+export interface IJoin {
   table: TableName;
   on: JoinOn;
   type: JoinType;
