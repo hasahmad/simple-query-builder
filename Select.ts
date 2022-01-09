@@ -30,6 +30,7 @@ export default class Select implements IQueryBuilder {
   private _orders: Array<OrderBy>;
   private _havings: Array<Having>;
   private _limit?: Limit;
+  private _explain?: boolean;
 
   constructor(
     from?: From,
@@ -40,6 +41,7 @@ export default class Select implements IQueryBuilder {
     orders: Array<OrderBy> = [],
     havings: Array<Having> = [],
     limit?: Limit,
+    explain: boolean = false,
   ) {
     if (!from) {
       this._from = new From([]);
@@ -54,6 +56,7 @@ export default class Select implements IQueryBuilder {
     this._orders = orders;
     this._havings = havings;
     this._limit = limit;
+    this._explain = explain;
   }
 
   select(fields: Array<Field | Col> = [STAR]) {
@@ -185,6 +188,11 @@ export default class Select implements IQueryBuilder {
     return this;
   }
 
+  explain() {
+    this._explain = true;
+    return this;
+  }
+
   build() {
     const result = [
       "SELECT",
@@ -192,6 +200,10 @@ export default class Select implements IQueryBuilder {
       "FROM",
       this._from.build(),
     ];
+
+    if (this._explain) {
+      result.unshift("EXPLAIN");
+    }
 
     if (this._joins.length > 0) {
       result.push(
