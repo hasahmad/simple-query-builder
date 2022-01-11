@@ -28,20 +28,6 @@ export default class Insert extends Query {
   }
 
   build() {
-    let data = "";
-    if (Array.isArray(this._data)) {
-      data = "(" + this._data.map(d => {
-        if (Array.isArray(d)) {
-          return d.map(v => Where.parseValue(v));
-        }
-        return Where.parseValue(d);
-      }).join('), (') + ")";
-    } else {
-      const b = this._data.build();
-      this._params.push(...b.params);
-      data = `(${b.query})`;
-    }
-
     const result = [
       "INSERT INTO",
       this._tables[0].build().query,
@@ -51,9 +37,17 @@ export default class Insert extends Query {
         return b.query;
       }).join(', ')})` : '',
       "VALUES",
-      data,
     ].filter(v => v.trim());
     this._params.push(...this._tables[0].build().params);
+
+    if (Array.isArray(this._data)) {
+      this._params.push(this._data);
+      result.push('?');
+    } else {
+      const b = this._data.build();
+      this._params.push(...b.params);
+      result.push(`(${b.query})`);
+    }
 
     if (this._joins.length) {
       result.push(
@@ -68,7 +62,11 @@ export default class Insert extends Query {
     if (this._wheres.length) {
       result.push("WHERE");
       result.push(
-        this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
+        this._wheres.map((v, i) => {
+          const b = v.build(i !== 0);
+          this._params.push(b.params);
+          return b.query;
+        }).join(' ')
       );
     }
 
