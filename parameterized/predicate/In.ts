@@ -22,7 +22,7 @@ export default class In implements IPredicateParams {
       return '?';
     }
     if (Array.isArray(this.value)) {
-      this.params = [this.value.join("', '")];
+      this.params = [`'${this.value.join("', '")}'`];
       return '(?)';
     }
     const b = this.value.build();

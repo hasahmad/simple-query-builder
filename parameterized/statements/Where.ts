@@ -123,7 +123,7 @@ export default class Where implements IQueryBuilderParams, IWHERE {
     }
 
     if (val === null || (typeof val === 'string' && val.toLowerCase() === 'null')) {
-      return `NULL`;
+      return null;
     }
 
     if ((typeof val === 'object' && Array.isArray(val)) || op === 'IN' || op === 'NOT IN') {

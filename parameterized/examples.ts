@@ -24,6 +24,9 @@ const query = QueryBuilder
     .where('r.removed_at', 'IS NULL')
   )
   .where('u.username', 'IS NOT NULL')
+  .where('u.email', 'IN', [
+    'user1', 'user2', 'user3', 'user4'
+  ])
   .where('u.username', 'LIKE', '%admin%')
   .where('u.created_at', 'BETWEEN', [
     new Date(2021, 0, 1), new Date(2022, 0, 9)

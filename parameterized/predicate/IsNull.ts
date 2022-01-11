@@ -3,7 +3,7 @@ import { IPredicateParams } from "../types";
 export type Value = string | null;
 
 export default class IsNull implements IPredicateParams {
-  protected predicate: string = "IS NULL";
+  protected predicate: string = "IS";
   private key: string;
   private value?: Value;
   private raw: boolean = false;
@@ -20,7 +20,8 @@ export default class IsNull implements IPredicateParams {
     return {
       query: [
         this.key,
-        this.predicate
+        this.predicate,
+        null,
       ].join(' '),
       params: this.params,
     };
