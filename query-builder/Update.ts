@@ -1,7 +1,7 @@
-import { Field, From, Join, Where, Set } from "./statements";
-import InvalidValueError from "./exceptions/InvalidValueError";
+import { Field, From, Join, Where, Set } from "../statements";
+import InvalidValueError from "../exceptions/InvalidValueError";
 import Query from "./BaseQuery";
-import { TableName, Val } from "./types";
+import { TableName, Val } from "../types";
 
 export default class Update extends Query {
   protected _sets: Array<Set>;

@@ -1,6 +1,6 @@
-import { Field, From, Join, Where } from "./statements";
+import { Field, From, Join, Where } from "../statements";
 import Query from "./BaseQuery";
-import { TableName } from "./types";
+import { TableName } from "../types";
 
 export default class Delete extends Query {
   constructor(

@@ -1,14 +1,14 @@
 import {
-  IQueryBuilder,
+  IQueryBuilderParams,
   OP,
   TableName,
   Val,
   JoinOn,
   JoinType,
   Col,
-} from './types';
-import { STAR } from './constants';
-import InvalidValueError from './exceptions/InvalidValueError';
+} from '../types';
+import { STAR } from '../../constants';
+import InvalidValueError from '../../exceptions/InvalidValueError';
 import {
   From,
   Field,
@@ -17,11 +17,11 @@ import {
   Having,
   GroupBy,
   OrderBy,
-} from './statements';
+} from '../statements';
 
 export type QueryType = "SELECT" | "INSERT" | "UPDATE" | "DELETE";
 
-export default abstract class BaseQuery implements IQueryBuilder {
+export default abstract class BaseQuery implements IQueryBuilderParams {
   protected _type: QueryType;
   protected _tables: Array<From>;
   protected _fields: Array<Field>;
@@ -31,6 +31,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
   protected _orders: Array<OrderBy>;
   protected _havings: Array<Having>;
   protected _returning: Array<Field>;
+  protected _params: Array<any>;
 
   constructor(
     type: QueryType = "SELECT",
@@ -56,6 +57,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     this._orders = orders;
     this._havings = havings;
     this._returning = returning;
+    this._params = [];
   }
 
   type(type: QueryType) {
@@ -133,7 +135,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this.join(table, on, 'RIGHT');
   }
 
-  where(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  where(where: Where | string | IQueryBuilderParams, op: OP = "=", val?: Val, raw: boolean = false) {
     if (where instanceof Where) {
       this._wheres.push(where);
       return this;
@@ -143,7 +145,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this;
   }
 
-  orWhere(where: Where | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  orWhere(where: Where | string | IQueryBuilderParams, op: OP = "=", val?: Val, raw: boolean = false) {
     if (where instanceof Where) {
       this._wheres.push(where);
       return this;
@@ -153,7 +155,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this;
   }
 
-  having(where: Having | string | IQueryBuilder, op: OP = "=", val?: Val, raw: boolean = false) {
+  having(where: Having | string | IQueryBuilderParams, op: OP = "=", val?: Val, raw: boolean = false) {
     if (where instanceof Having) {
       this._havings.push(where);
       return this;
@@ -163,7 +165,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this;
   }
 
-  group(groups: GroupBy | Array<GroupBy> | string | Array<string> | IQueryBuilder | Array<IQueryBuilder>) {
+  group(groups: GroupBy | Array<GroupBy> | string | Array<string> | IQueryBuilderParams | Array<IQueryBuilderParams>) {
     if (Array.isArray(groups)) {
       for (const g of groups) {
         this.group(g);
@@ -180,7 +182,7 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this;
   }
 
-  order(orders: OrderBy | Array<OrderBy> | string | Array<string> | IQueryBuilder | Array<IQueryBuilder>) {
+  order(orders: OrderBy | Array<OrderBy> | string | Array<string> | IQueryBuilderParams | Array<IQueryBuilderParams>) {
     if (Array.isArray(orders)) {
       for (const o of orders) {
         this.order(o);
@@ -214,9 +216,9 @@ export default abstract class BaseQuery implements IQueryBuilder {
     return this;
   }
 
-  abstract build(): string
+  abstract build(): { query: string, params: Array<any> }
 
   toString() {
-    return this.build();
+    return this.build().query;
   }
 }

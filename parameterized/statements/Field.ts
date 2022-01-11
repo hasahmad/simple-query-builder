@@ -1,10 +1,10 @@
-import { ISTAR } from "../constants";
-import { IQueryBuilder } from "../types";
+import { ISTAR } from "../../constants";
+import { IQueryBuilderParams } from "../types";
 
-export type Col = {[alias: string]: string | IQueryBuilder} | string;
+export type Col = {[alias: string]: string | IQueryBuilderParams} | string;
 export type Fields = Array<Field> | ISTAR;
 
-export default class Field implements IQueryBuilder {
+export default class Field implements IQueryBuilderParams {
   private field: Col;
 
   constructor(field: Col) {
@@ -12,7 +12,10 @@ export default class Field implements IQueryBuilder {
   }
 
   public build() {
-    return Field.parseField(this.field);
+    return {
+      query: Field.parseField(this.field),
+      params: [],
+    };
   }
 
   static parseField(f: Col) {

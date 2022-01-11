@@ -36,8 +36,7 @@ const query = QueryBuilder
   .explain();
 
 console.log(
-  query.build(),
-  query.build() === "EXPLAIN DISTINCT SELECT r.role_id, count(*) AS num FROM users AS u, user_roles AS ur, (SELECT * FROM permissions AS p WHERE (p.removed_at IS NULL)) AS up INNER JOIN contacts AS con ON con.contact_id = u.contact_id LEFT JOIN companies AS c ON ((c.company_id = u.company_id) AND (c.parent_type = 'TENANT')) WHERE (u.user_id = ur.user_id) AND (u.user_id = up.user_id) OR u.role_id IN (SELECT r.role_id FROM roles AS r WHERE r.removed_at IS NULL) AND u.username IS NOT NULL AND u.username LIKE '%admin%' AND u.created_at BETWEEN '2021-01-01T05:00:00.000Z' AND '2022-01-09T05:00:00.000Z' AND (u.updated_at > '2021-11-01T04:00:00.000Z') GROUP BY r.role_id HAVING (count(*) >= 1) ORDER BY u.user_id"
+  query.build()
 );
 /**
  * Output:
@@ -66,8 +65,7 @@ const insertQuery = QueryBuilder
   .returning(['*']);
 
 console.log(
-  insertQuery.build(),
-  insertQuery.build() === "INSERT INTO users (user_id, username, email, password) VALUES (100,'user100','user100@gmail.com','SOME HASH'), (101,'user101','user101@gmail.com','SOME HASH') WHERE (users.user_id >= 20) RETURNING *"
+  insertQuery.build()
 );
  /**
   * Output:
@@ -88,8 +86,7 @@ const insertQuerySelect = QueryBuilder
   .returning(['user_id', 'username', 'email',]);
 
 console.log(
-  insertQuerySelect.build(),
-  insertQuerySelect.build() === "INSERT INTO users (user_id, username, email, password, removed_at) VALUES (SELECT NULL AS user_id, username, email, password, null as removed_at FROM users WHERE (users.user_id = 20)) RETURNING user_id, username, email"
+  insertQuerySelect.build()
 );
  /**
   * Output:
@@ -106,8 +103,7 @@ const updateQuery = QueryBuilder
   .where('ur.role_id', '=', 15);
 
 console.log(
-  updateQuery.build(),
-  updateQuery.build() === "UPDATE users SET users.removed_at = '2022-01-08T05:00:00.000Z' INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)"
+  updateQuery.build()
 );
 /**
  * Output:
@@ -123,8 +119,7 @@ const deleteQuery = QueryBuilder
   .where('ur.role_id', '=', 15);
 
 console.log(
-  deleteQuery.build(),
-  deleteQuery.build() === "DELETE FROM users INNER JOIN user_roles AS ur ON ur.user_id = users.user_id WHERE (users.user_id >= 20) AND (ur.role_id = 15)"
+  deleteQuery.build()
 );
 /**
   * Output:

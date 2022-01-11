@@ -1,6 +1,6 @@
-import InvalidValueError from "../exceptions/InvalidValueError";
+import InvalidValueError from "../../exceptions/InvalidValueError";
 import { Between, BetweenValue, In, InValue, IsNotNull, IsNull, IsNullValue, Like, LikeValue, NotBetween, NotIn, NotLike } from "../predicate";
-import { IQueryBuilder } from "../types";
+import { IQueryBuilderParams } from "../types";
 
 export type OP = 
   '=' | '!=' | '<>'
@@ -12,34 +12,35 @@ export type OP =
   | 'IS NULL' | 'IS NOT NULL'
   | 'IS' | 'IS NOT'
   | 'NOT';
-export type Val = string | number | Date | Array<any> | IQueryBuilder | null;
+export type Val = string | number | Date | Array<any> | IQueryBuilderParams | null;
 export type WhereType = 'AND' | 'OR';
 export interface IWHERE {
-  where: string | IQueryBuilder;
+  where: string | IQueryBuilderParams;
   op?: OP;
   val?: Val;
   type: WhereType;
   raw?: boolean;
 }
 
-export default class Where implements IQueryBuilder, IWHERE {
-  where: string | IQueryBuilder;
+export default class Where implements IQueryBuilderParams, IWHERE {
+  where: string | IQueryBuilderParams;
   op?: OP;
   val?: Val;
   type: WhereType;
   raw?: boolean;
+  private params: Array<any>;
 
-  constructor(where: string | IQueryBuilder, op: OP = "=", val?: Val, type: WhereType = 'AND', raw: boolean = false) {
+  constructor(where: string | IQueryBuilderParams, op: OP = "=", val?: Val, type: WhereType = 'AND', raw: boolean = false) {
     this.where = where;
     this.op = op;
     this.val = val;
     this.type = type;
     this.raw = raw;
-    return this;
+    this.params = [];
   }
 
   public build(prepend = true) {
-    return Where.parseWhere({
+    return this.parseWhere({
       where: this.where,
       val: this.val,
       op: this.op,
@@ -48,8 +49,11 @@ export default class Where implements IQueryBuilder, IWHERE {
     } as IWHERE, prepend);
   }
 
-  static parseWhere(w: IWHERE, prepend = true) {
-    let result = "";
+  parseWhere(w: IWHERE, prepend = true) {
+    let query = "";
+    let qry = {
+      query: '', params: [] as Array<any>,
+    };
     if (typeof w.where === 'string') {
       if (w.val === undefined && !['IS NULL', 'IS NOT NULL',].includes(w.op || '')) {
         throw new InvalidValueError();
@@ -57,37 +61,60 @@ export default class Where implements IQueryBuilder, IWHERE {
 
       switch (w.op) {
         case 'BETWEEN':
-          result = new Between(w.where, w.val as BetweenValue, w.raw).build();
+          qry = new Between(w.where, w.val as BetweenValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'NOT BETWEEN':
-          result = new NotBetween(w.where, w.val as BetweenValue, w.raw).build();
+          qry = new NotBetween(w.where, w.val as BetweenValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'IS NULL':
-          result = new IsNull(w.where, w.val as IsNullValue, w.raw).build();
+          qry = new IsNull(w.where, w.val as IsNullValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'IS NOT NULL':
-          result = new IsNotNull(w.where, w.val as IsNullValue, w.raw).build();
+          qry = new IsNotNull(w.where, w.val as IsNullValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'LIKE':
-          result = new Like(w.where, w.val as LikeValue, w.raw).build();
+          qry = new Like(w.where, w.val as LikeValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'NOT LIKE':
-          result = new NotLike(w.where, w.val as LikeValue, w.raw).build();
+          qry = new NotLike(w.where, w.val as LikeValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'IN':
-          result = new In(w.where, w.val as InValue, w.raw).build();
+          qry = new In(w.where, w.val as InValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         case 'NOT IN':
-          result = new NotIn(w.where, w.val as InValue, w.raw).build();
+          qry = new NotIn(w.where, w.val as InValue, w.raw).build();
+          query = qry.query;
+          this.params = qry.params;
           break;
         default:
-          result = `(${w.where} ${w.op} ${Where.parseValue(w.val as Val, w.op, w.raw)})`;
+          query = `(${w.where} ${w.op} ?)`;
+          this.params = [Where.parseValue(w.val as Val, w.op, w.raw)];
           break;
       }
     } else {
-      result = `(${w.where.build()})`;
+      qry = w.where.build();
+      query = `(${qry.query})`;
+      this.params = qry.params;
     }
-    return !prepend ? result : `${w.type} ${result}`;
+
+    return {
+      query: !prepend ? query : `${w.type} ${query}`,
+      params: this.params,
+    };
   }
 
   static parseValue(val: Val, op?: OP, raw: boolean = false) {

@@ -7,7 +7,7 @@ import {
   GroupBy,
   OrderBy,
   Limit,
-} from './statements';
+} from '../statements';
 import Query from './BaseQuery';
 
 export default class Select extends Query {
@@ -56,9 +56,17 @@ export default class Select extends Query {
   build() {
     const result = [
       "SELECT",
-      this._fields.map(f => f.build()).join(', '),
+      this._fields.map(v => {
+        const b = v.build();
+        this._params.push(...b.params);
+        return b.query;
+      }).join(', '),
       "FROM",
-      this._tables.map(v => v.build()).join(', '),
+      this._tables.map(v => {
+        const b = v.build();
+        this._params.push(...b.params);
+        return b.query;
+      }).join(', '),
     ];
 
     if (this._distinct) {
@@ -71,44 +79,63 @@ export default class Select extends Query {
 
     if (this._joins.length > 0) {
       result.push(
-        this._joins.map(v => v.build()).join(' ')
+        this._joins.map(v => {
+          const b = v.build();
+          this._params.push(...b.params);
+          return b.query;
+        }).join(' ')
       );
     }
     if (this._wheres.length > 0) {
       result.push("WHERE");
       result.push(
-        this._wheres.map((v, i) => v.build(i !== 0)).join(' ')
+        this._wheres.map((v, i) => {
+          const b = v.build(i !== 0);
+          this._params.push(...b.params);
+          return b.query;
+        }).join(' ')
       );
     }
     if (this._groups.length > 0) {
       result.push("GROUP BY");
       result.push(
-        this._groups.map(v => v.build()).join(' ')
+        this._groups.map(v => {
+          const b = v.build();
+          this._params.push(...b.params);
+          return b.query;
+        }).join(' ')
       );
     }
     if (this._havings.length > 0) {
       result.push("HAVING");
       result.push(
-        this._havings.map((v, i) => v.build(i !== 0)).join(' ')
+        this._havings.map((v, i) => {
+          const b = v.build(i !== 0);
+          this._params.push(...b.params);
+          return b.query;
+        }).join(' ')
       );
     }
     if (this._orders.length > 0) {
       result.push("ORDER BY");
       result.push(
-        this._orders.map(v => v.build()).join(' ')
+        this._orders.map(v => {
+          const b = v.build();
+          this._params.push(...b.params);
+          return b.query;
+        }).join(' ')
       );
     }
     if (this._limit) {
       result.push("LIMIT");
-      result.push(
-        this._limit.build()
-      );
+      const b = this._limit.build();
+      result.push(b.query);
+      this._params.push(...b.params);
     }
 
-    return result.join(' ');
-  }
-
-  toString() {
-    return this.build();
+    return {
+      query: result.join(' '),
+      params: this._params,
+    };
   }
 }

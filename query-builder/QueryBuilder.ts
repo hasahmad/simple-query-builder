@@ -1,7 +1,7 @@
-import { Col, TableName } from './types';
+import { Col, TableName } from '../types';
 import Select from './Select';
-import { STAR } from './constants';
-import { Field, From } from './statements';
+import { STAR } from '../constants';
+import { Field, From } from '../statements';
 import Update from './Update';
 import Delete from './Delete';
 import Insert from './Insert';

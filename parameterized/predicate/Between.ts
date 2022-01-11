@@ -1,27 +1,32 @@
-import InvalidValueError from "../exceptions/InvalidValueError";
-import { IQueryBuilder, IPredicate } from "../types";
+import InvalidValueError from "../../exceptions/InvalidValueError";
+import { IQueryBuilderParams, IPredicateParams } from "../types";
 
-type Val = string | number | Date | IQueryBuilder;
+type Val = string | number | Date | IQueryBuilderParams;
 export type Value = [ Val, Val ];
 
-export default class Between implements IPredicate {
+export default class Between implements IPredicateParams {
   protected predicate: string = "BETWEEN";
   private key: string;
   private values: Value;
   private raw: boolean = false;
+  private params: Array<any>;
 
   // values could be 'date1 and date2' | [date1, date2] | Builder().select([{'val': "concat(date1, ' and ', date2)"}]).from(...)...
   constructor(key: string, values: Value, raw: boolean = false) {
     this.key = key;
     this.values = values;
     this.raw = raw;
+    this.params = [];
   }
 
   parseValues() {
     if (this.values.length > 2) {
       throw new InvalidValueError('must be array if length 2');
     }
-    return this.values.map(this.parseValue).join(' AND ');
+    return this.values.map(v => {
+      this.params.push(this.parseValue(v));
+      return '?';
+    }).join(' AND ');
   }
 
   parseValue(val: Val) {
@@ -42,10 +47,13 @@ export default class Between implements IPredicate {
   }
 
   build() {
-    return [
-      this.key,
-      this.predicate,
-      this.parseValues(),
-    ].join(' ');
+    return {
+      query: [
+        this.key,
+        this.predicate,
+        this.parseValues(),
+      ].join(' '),
+      params: this.params,
+    };
   }
 }

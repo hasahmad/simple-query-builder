@@ -1,5 +1,4 @@
-import InvalidTableNameError from "../exceptions/InvalidTableNameError";
-import { IQueryBuilder } from "../interfaces/IQueryBuilder";
+import { IQueryBuilder } from "../types";
 
 export type TableName = {[alias: string]: string | IQueryBuilder} | string;
 

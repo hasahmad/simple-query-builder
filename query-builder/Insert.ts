@@ -1,6 +1,6 @@
-import { Field, From, Join, Where } from "./statements";
+import { Field, From, Join, Where } from "../statements";
 import Query from "./BaseQuery";
-import { IQueryBuilder, TableName } from "./types";
+import { IQueryBuilder, TableName } from "../types";
 
 export type IData = Array<Array<any> | any> | IQueryBuilder;
 

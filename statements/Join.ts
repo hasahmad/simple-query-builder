@@ -1,4 +1,4 @@
-import { IQueryBuilder } from "../interfaces/IQueryBuilder";
+import { IQueryBuilder } from "../types";
 import From, { TableName } from "./From";
 import Where from "./Where";
 
