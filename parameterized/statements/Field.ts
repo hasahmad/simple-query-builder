@@ -12,22 +12,32 @@ export default class Field implements IQueryBuilderParams {
   }
 
   public build() {
-    return {
-      query: Field.parseField(this.field),
-      params: [],
-    };
+    return Field.parseField(this.field);
   }
 
   static parseField(f: Col) {
-    if (typeof f === 'string') { return f; }
+    if (typeof f === 'string') {
+      return {
+        query: f,
+        params: [],
+      };
+    }
 
       // { user_id: 'u.id' } => 'u.id as user_id'
       const k = Object.keys(f)[0];
       const val = f[k];
-      return `${
-        typeof val === 'string'
-          ? val
-          : val
-      } AS ${k}`;
+      let params = [];
+      if (typeof val != 'string') {
+        params = val.build().params;
+      }
+
+      return {
+        query: `${
+          typeof val === 'string'
+            ? val
+            : "(" + val.build().query + ")"
+        } AS ${k}`,
+        params: params,
+      };
   }
 }
