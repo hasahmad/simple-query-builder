@@ -44,7 +44,7 @@ export default class Case implements IQueryBuilderParams {
       }
 
       const b = val.build();
-      this.params.push(...b.push);
+      this.params.push(...b.params);
       return `WHEN ${b.query} THEN (?)`;
     });
   }

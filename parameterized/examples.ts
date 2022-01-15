@@ -1,12 +1,14 @@
 import { Where } from './statements';
 import QueryBuilder from './query-builder/QueryBuilder';
 import Case from './statements/Case';
+import Expression from './query-builder/Expression';
 
 const query = QueryBuilder
   .select([
     "r.role_id",
     {'num': "count(*)"},
     {'test': new Case({"u.updated_at IS NULL": "1"}, "0")},
+    {'is_removed': new Expression('sum(if(u.is_removed is not null, 1, 0))', [])},
   ])
   .from({ 'u': 'users' })
   .from({ 'ur': 'user_roles' })
