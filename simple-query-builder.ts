@@ -2,10 +2,59 @@
 type TColumn = IExpression | string | { [key: string]: IExpression | string };
 type TTable = IExpression | string | { [key: string]: IExpression | string };
 
-interface IExpression {
+interface ISelect {
+    select(columns: Array<TColumn>): IExplain & IDistinct & IFrom;
+};
+
+interface IExplain {
+    explain(_explain: boolean): IDistinct & IFrom;
+}
+
+interface IDistinct {
+    distinct(_distinct: boolean): IFrom;
+}
+
+interface IFrom {
+    from(tables: TTable | Array<TTable>): IJoin & IWhere;
+};
+
+interface IJoin {
+    join(table: TTable, on: string): IJoin & IWhere;
+    joinLeft(table: TTable, on: string): IJoin & IWhere;
+    joinRight(table: TTable, on: string): IJoin & IWhere;
+    joinInner(table: TTable, on: string): IJoin & IWhere;
+    joinOuter(table: TTable, on: string): IJoin & IWhere;
+};
+
+interface IWhere {
+    where(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit;
+    orWhere(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit;
+}
+
+interface IGroupBy {
+    groupBy(groups: string | string[]): IHaving & IOrderBy & ILimit;
+}
+
+interface IHaving {
+    having(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit;
+    orHaving(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit;
+}
+
+interface IOrderBy {
+    orderBy(orders: string | string[]): ILimit;
+}
+
+interface ILimit {
+    limit(limit: number, page?: number): IExpression;
+}
+
+interface IBuildExpression {
+    buildExpression(): [string, Array<any>];
+}
+
+interface IExpression extends IBuildExpression {
     getParams(): any[];
     getQuery(): string;
-    buildExpression(): [string, Array<any>];
 }
 
 class Expression implements IExpression {
@@ -141,7 +190,18 @@ class Where extends Expression
     }
 }
 
-class Select implements IExpression
+class Select implements
+    IExpression,
+    ISelect,
+    IExplain,
+    IDistinct,
+    IFrom,
+    IJoin,
+    IWhere,
+    IGroupBy,
+    IHaving,
+    IOrderBy,
+    ILimit
 {
     // select columns
     protected columns: Expression[];
@@ -248,65 +308,66 @@ class Select implements IExpression
         return [this.getQuery(), this.getParams()];
     }
 
-    select(columns: Array<TColumn> = ['*'])
+    select(columns: Array<TColumn> = ['*']): IExplain & IDistinct & IFrom
     {
         columns.forEach(v => {
             this.columns.push(parseColumn(v));
         });
-        return this;
+        return this as unknown as (IExplain & IDistinct & IFrom);
     }
 
-    from(tables: TTable | Array<TTable>)
+    from(tables: TTable | Array<TTable>): IJoin & IWhere
     {
         if (Array.isArray(tables)) {
             tables.forEach(v => {
                 this.fromTables.push(parseTable(v));
             });
-            return this;
+        } else {
+            this.fromTables.push(parseTable(tables));
         }
 
-        this.fromTables.push(parseTable(tables));
-        return this;
+        return this as unknown as (IJoin & IWhere);
     }
 
-    join(table: TTable, on: string)
+    join(table: TTable, on: string): IJoin & IWhere
     {
         this.joins.push(
             new Join('INNER', table, on)
         );
-        return this;
+        return this as unknown as (IJoin & IWhere);
     }
 
-    joinLeft(table: IExpression | string, on: string)
+    joinLeft(table: TTable, on: string): IJoin & IWhere
     {
         this.joins.push(
             new Join('LEFT', table, on)
         );
-        return this;
+        return this as unknown as (IJoin & IWhere);
     }
 
-    joinRight(table: IExpression | string, on: string)
+    joinRight(table: TTable, on: string): IJoin & IWhere
     {
         this.joins.push(
             new Join('RIGHT', table, on)
         );
-        return this;
+        return this as unknown as (IJoin & IWhere);
     }
 
-    joinInner(table: IExpression | string, on: string)
+    joinInner(table: TTable, on: string): IJoin & IWhere
     {
         return this.join(table, on);
     }
 
-    joinOuter(table: IExpression | string, on: string)
+    joinOuter(table: TTable, on: string): IJoin & IWhere
     {
         this.joins.push(
             new Join('OUTER', table, on)
         );
-        return this;
+        return this as unknown as (IJoin & IWhere);
     }
 
-    where(where: string | IExpression, params?: any) {
+    where(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
+    {
         this.wheres.push(
             new Where(
                 this.wheres.length === 0 ? '' : 'AND',
@@ -314,10 +375,11 @@ class Select implements IExpression
                 params
             )
         );
-        return this;
+        return this as unknown as (IWhere & IGroupBy & IOrderBy & ILimit);
     }
 
-    orWhere(where: string | IExpression, params?: any) {
+    orWhere(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
+    {
         this.wheres.push(
             new Where(
                 this.wheres.length === 0 ? '' : 'OR',
@@ -325,21 +387,23 @@ class Select implements IExpression
                 params
             )
         );
-        return this;
+        return this as unknown as (IWhere & IGroupBy & IOrderBy & ILimit);
     }
 
-    groupBy(groups: string | string[]) {
+    groupBy(groups: string | string[]): IHaving & IOrderBy & ILimit
+    {
         if (typeof groups === 'string') {
             this.groupBys.push(new Expression(groups));
-            return this;
+        } else {
+            this.groupBys = this.groupBys.concat(
+                groups.map(v => new Expression(v))
+            );
         }
-        this.groupBys = this.groupBys.concat(
-            groups.map(v => new Expression(v))
-        );
-        return this;
+        return this as unknown as (IHaving & IOrderBy & ILimit);
     }
 
-    having(where: string | IExpression, params?: any) {
+    having(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
+    {
         this.havings.push(
             new Where(
                 this.havings.length === 0 ? '' : 'AND',
@@ -347,10 +411,11 @@ class Select implements IExpression
                 params
             )
         );
-        return this;
+        return this as unknown as (IHaving & IOrderBy & ILimit);
     }
 
-    orHaving(where: string | IExpression, params?: any) {
+    orHaving(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
+    {
         this.havings.push(
             new Where(
                 this.havings.length === 0 ? '' : 'OR',
@@ -358,34 +423,38 @@ class Select implements IExpression
                 params
             )
         );
-        return this;
+        return this as unknown as (IHaving & IOrderBy & ILimit);
     }
 
-    orderBy(orders: string | string[]) {
+    orderBy(orders: string | string[]): ILimit
+    {
         if (typeof orders === 'string') {
             this.orderBys.push(new Expression(orders));
-            return this;
+        } else {
+            this.orderBys = this.orderBys.concat(
+                orders.map(v => new Expression(v))
+            );
         }
-        this.orderBys = this.orderBys.concat(
-            orders.map(v => new Expression(v))
-        );
-        return this;
+        return this as unknown as ILimit;
     }
 
-    limit(limit: number, page?: number) {
+    limit(limit: number, page?: number): IExpression
+    {
         this._limit = limit;
         this._page = page;
-        return this;
+        return this as unknown as IExpression;
     }
 
-    explain(_explain: boolean = true) {
+    explain(_explain: boolean = true): IDistinct & IFrom
+    {
         this._explain = _explain;
-        return this;
+        return this as unknown as (IDistinct & IFrom);
     }
 
-    distinct(_distinct: boolean = true) {
+    distinct(_distinct: boolean = true): IFrom
+    {
         this._distinct = _distinct;
-        return this;
+        return this as unknown as IFrom;
     }
 }
 
@@ -412,11 +481,15 @@ function parseTable(table: TTable): Expression {
     return parseColumn(table);
 }
 
-function isIExpression(val: any): val is IExpression {
-    return (val.buildExpression && typeof val.buildExpression === 'function'
-        && val.getQuery && typeof val.getQuery === 'function'
-        && val.getParams && typeof val.getParams === 'function')
-        || (val instanceof Expression);
+function isIExpression(val: unknown): val is IExpression {
+    if (typeof val !== 'object') { return false; }
+
+    return val instanceof Expression
+        || (
+            typeof (val as IExpression).buildExpression === 'function'
+            && typeof (val as IExpression).getQuery === 'function'
+            && typeof (val as IExpression).getParams === 'function'
+        );
 }
 
 
