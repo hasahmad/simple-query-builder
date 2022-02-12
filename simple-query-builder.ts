@@ -239,7 +239,8 @@ class Select implements
         this.orderBys = [];
     }
 
-    getParams(): any[] {
+    getParams(): any[]
+    {
         const columns = this.columns.map(v => v.buildExpression());
         const fromTables = this.fromTables.map(v => v.buildExpression());
         const joins = this.joins.map(v => v.buildExpression());
@@ -259,7 +260,8 @@ class Select implements
         ];
     }
 
-    getQuery(): string {
+    getQuery(): string
+    {
         const columns = this.columns.map(v => v.buildExpression());
         const fromTables = this.fromTables.map(v => v.buildExpression());
         const joins = this.joins.map(v => v.buildExpression());
@@ -313,7 +315,7 @@ class Select implements
         columns.forEach(v => {
             this.columns.push(parseColumn(v));
         });
-        return this as unknown as (IExplain & IDistinct & IFrom);
+        return this as (IExplain & IDistinct & IFrom);
     }
 
     from(tables: TTable | Array<TTable>): IJoin & IWhere
@@ -326,7 +328,7 @@ class Select implements
             this.fromTables.push(parseTable(tables));
         }
 
-        return this as unknown as (IJoin & IWhere);
+        return this as (IJoin & IWhere);
     }
 
     join(table: TTable, on: string): IJoin & IWhere
@@ -334,7 +336,7 @@ class Select implements
         this.joins.push(
             new Join('INNER', table, on)
         );
-        return this as unknown as (IJoin & IWhere);
+        return this as (IJoin & IWhere);
     }
 
     joinLeft(table: TTable, on: string): IJoin & IWhere
@@ -342,7 +344,7 @@ class Select implements
         this.joins.push(
             new Join('LEFT', table, on)
         );
-        return this as unknown as (IJoin & IWhere);
+        return this as (IJoin & IWhere);
     }
 
     joinRight(table: TTable, on: string): IJoin & IWhere
@@ -350,7 +352,7 @@ class Select implements
         this.joins.push(
             new Join('RIGHT', table, on)
         );
-        return this as unknown as (IJoin & IWhere);
+        return this as (IJoin & IWhere);
     }
 
     joinInner(table: TTable, on: string): IJoin & IWhere
@@ -363,7 +365,7 @@ class Select implements
         this.joins.push(
             new Join('OUTER', table, on)
         );
-        return this as unknown as (IJoin & IWhere);
+        return this as (IJoin & IWhere);
     }
 
     where(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
@@ -375,7 +377,7 @@ class Select implements
                 params
             )
         );
-        return this as unknown as (IWhere & IGroupBy & IOrderBy & ILimit);
+        return this as (IWhere & IGroupBy & IOrderBy & ILimit);
     }
 
     orWhere(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
@@ -387,7 +389,7 @@ class Select implements
                 params
             )
         );
-        return this as unknown as (IWhere & IGroupBy & IOrderBy & ILimit);
+        return this as (IWhere & IGroupBy & IOrderBy & ILimit);
     }
 
     groupBy(groups: string | string[]): IHaving & IOrderBy & ILimit
@@ -399,7 +401,7 @@ class Select implements
                 groups.map(v => new Expression(v))
             );
         }
-        return this as unknown as (IHaving & IOrderBy & ILimit);
+        return this as (IHaving & IOrderBy & ILimit);
     }
 
     having(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
@@ -411,7 +413,7 @@ class Select implements
                 params
             )
         );
-        return this as unknown as (IHaving & IOrderBy & ILimit);
+        return this as (IHaving & IOrderBy & ILimit);
     }
 
     orHaving(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
@@ -423,7 +425,7 @@ class Select implements
                 params
             )
         );
-        return this as unknown as (IHaving & IOrderBy & ILimit);
+        return this as (IHaving & IOrderBy & ILimit);
     }
 
     orderBy(orders: string | string[]): ILimit
@@ -435,26 +437,26 @@ class Select implements
                 orders.map(v => new Expression(v))
             );
         }
-        return this as unknown as ILimit;
+        return this as ILimit;
     }
 
     limit(limit: number, page?: number): IExpression
     {
         this._limit = limit;
         this._page = page;
-        return this as unknown as IExpression;
+        return this as IExpression;
     }
 
     explain(_explain: boolean = true): IDistinct & IFrom
     {
         this._explain = _explain;
-        return this as unknown as (IDistinct & IFrom);
+        return this as (IDistinct & IFrom);
     }
 
     distinct(_distinct: boolean = true): IFrom
     {
         this._distinct = _distinct;
-        return this as unknown as IFrom;
+        return this as IFrom;
     }
 }
 
