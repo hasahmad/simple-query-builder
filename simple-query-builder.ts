@@ -411,7 +411,7 @@ function isIExpression(val: any): val is IExpression {
 
 const membersSelect = new Select();
 membersSelect
-    .select(['m.id'])
+    .select(['m.member_id'])
     .from({'m': 'members'})
     .where('m.member_id IN (?)', [1, 2, 3, 4])
     .where('m.active = ?', 1);
@@ -434,7 +434,7 @@ console.log(query.buildExpression());
 
 /**
  * [
- *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?)))",
+ *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.member_id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?)))",
  *   [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1 ]
  * ]
  *
