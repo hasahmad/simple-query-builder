@@ -223,15 +223,15 @@ class Select implements IExpression
         ]).concat(
             this.groupBys.length === 0
                 ? []
-                : ['GROUP BY', ...groupBys.map(v => v[0]).join(', ')],
+                : ['GROUP BY', groupBys.map(v => v[0]).join(',')],
         ).concat(
             this.havings.length === 0
                 ? []
-                : ['HAVING', ...havings.map(v => v[0]).join(', ')],
+                : ['HAVING', havings.map(v => v[0]).join(', ')],
         ).concat(
             this.orderBys.length === 0
                 ? []
-                : ['ORDER BY', ...orderBys.map(v => v[0]).join(', ')],
+                : ['ORDER BY', orderBys.map(v => v[0]).join(', ')],
         ).concat(
             !this._limit
                 ? []
@@ -339,13 +339,24 @@ class Select implements IExpression
         return this;
     }
 
-    having(havings: string | string[]) {
-        if (typeof havings === 'string') {
-            this.havings.push(new Expression(havings));
-            return this;
-        }
-        this.havings = this.havings.concat(
-            havings.map(v => new Expression(v))
+    having(where: string | IExpression, params?: any) {
+        this.havings.push(
+            new Where(
+                this.havings.length === 0 ? '' : 'AND',
+                where,
+                params
+            )
+        );
+        return this;
+    }
+
+    orHaving(where: string | IExpression, params?: any) {
+        this.havings.push(
+            new Where(
+                this.havings.length === 0 ? '' : 'OR',
+                where,
+                params
+            )
         );
         return this;
     }
@@ -428,15 +439,15 @@ query
     .join({'o': 'org_units'}, 'o.org_unit_id = u.org_unit_id')
     .where(new Where('', 'u.active = ?', 1, false))
     .where('u.date_joined >= ?', new Date(2021, 1, 1, 1, 1, 1))
-    .orWhere('o.member_id in ({{?}})', membersSelect);
+    .orWhere('o.member_id in ({{?}})', membersSelect)
+    .groupBy(['m.member_id'])
+    .having('count(o.name) > ?', 1234);
 
 console.log(query.buildExpression());
 
 /**
  * [
- *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.member_id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?)))",
- *   [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1 ]
+ *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.member_id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?))) GROUP BY m.member_id HAVING (count(o.name) > ?)",
+ *   [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1, 1234 ]
  * ]
- *
  */
-
