@@ -511,6 +511,53 @@ function isIExpression(val: unknown): val is IExpression {
         );
 }
 
+type TValue = string
+    | number
+    | boolean
+    | { value: any, raw?: boolean, type?: string }
+    | null
+    | Array<TValue | { value: any, raw?: boolean, type?: string }>
+
+function parseValue(value: any, raw: boolean = false, type: string | null = null): string {
+    if (raw) {
+        return `${value}`;
+    }
+
+    const isNull = (type === 'null') || (!type && value === null) || value === 'NULL' || value === 'null';
+    const isString = (type === 'string') || (!type && typeof value === 'string');
+    const isBool = (type === 'boolean') || (!type && typeof value === 'boolean');
+    const isNumber = (type === 'number') || (!type && typeof value === 'number');
+    const isArray = (!type  || type === 'array') && Array.isArray(value);
+
+    if (isNull) {
+        return `NULL`;
+    }
+
+    if (isNumber) {
+        return `${value}`;
+    }
+
+    if (isString) {
+        return `'${value}'`;
+    }
+
+    if (isBool) {
+        return `${value}`;
+    }
+
+    if (isArray) {
+        return (value as TValue[]).map((v: TValue) => {
+            if (v && typeof v === 'object' && !Array.isArray(v)) {
+                return parseValue(v.value || v, v.raw || false, v.type);
+            }
+
+            return parseValue(v);
+        }).join(',');
+    }
+
+    return `${value}`;
+}
+
 class QueryBuilder {
     static select(columns: Array<TColumn> = ['*']): SelectReturn
     {
@@ -560,7 +607,29 @@ console.log(
 );
 /**
  * [
- *   "EXPLAIN SELECT DISTINCT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level",
+ *   "EXPLAIN DISTINCT SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level",
  *   []
  * ]
  */
+
+console.log({
+    1: parseValue(1),
+    '2': parseValue('2'),
+    'str': parseValue('str'),
+    '[1,2,3,]': parseValue([1,2,3,]),
+    '["he","ll","o",100,238]': parseValue(["he","ll","o",100,238]),
+    '["he","ll","o",{value: 100, type: "string"},238]': parseValue(["he","ll","o",{value: 100, type: "string"},238]),
+    'string with type array': parseValue('[1,2,3,]', false, 'array'),
+})
+/**
+ * {
+ *  '1': '1',
+ *  '2': "'2'",
+ *  str: "'str'",
+ *  '[1,2,3,]': '1,2,3',
+ *  '["he","ll","o",100,238]': "'he','ll','o',100,238",
+ *  '["he","ll","o",{value: 100, type: "string"},238]': "'he','ll','o','100',238",
+ *  'string with type array': '[1,2,3,]'
+ * }
+ */
+
