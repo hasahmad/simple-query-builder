@@ -1,53 +1,4 @@
 
-type TColumn = IExpression | string | { [key: string]: IExpression | string };
-type TTable = IExpression | string | { [key: string]: IExpression | string };
-
-interface ISelect {
-    select(columns: Array<TColumn>): IExplain & IDistinct & IFrom;
-};
-
-interface IExplain {
-    explain(_explain: boolean): IDistinct & IFrom;
-}
-
-interface IDistinct {
-    distinct(_distinct: boolean): IFrom;
-}
-
-interface IFrom {
-    from(tables: TTable | Array<TTable>): IJoin & IWhere;
-};
-
-interface IJoin {
-    join(table: TTable, on: string): IJoin & IWhere;
-    joinLeft(table: TTable, on: string): IJoin & IWhere;
-    joinRight(table: TTable, on: string): IJoin & IWhere;
-    joinInner(table: TTable, on: string): IJoin & IWhere;
-    joinOuter(table: TTable, on: string): IJoin & IWhere;
-};
-
-interface IWhere {
-    where(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit;
-    orWhere(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit;
-}
-
-interface IGroupBy {
-    groupBy(groups: string | string[]): IHaving & IOrderBy & ILimit;
-}
-
-interface IHaving {
-    having(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit;
-    orHaving(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit;
-}
-
-interface IOrderBy {
-    orderBy(orders: string | string[]): ILimit;
-}
-
-interface ILimit {
-    limit(limit: number, page?: number): IExpression;
-}
-
 interface IBuildExpression {
     buildExpression(): [string, Array<any>];
 }
@@ -55,6 +6,66 @@ interface IBuildExpression {
 interface IExpression extends IBuildExpression {
     getParams(): any[];
     getQuery(): string;
+}
+
+type TColumn = IExpression | string | { [key: string]: IExpression | string };
+type TTable = IExpression | string | { [key: string]: IExpression | string };
+
+type SelectReturn = IExpression & IExplain & IDistinct & IFrom;
+type ExplainReturn = IExpression & IDistinct & IFrom;
+type DistinctReturn = IExpression & IFrom;
+type FromReturn = IExpression & IJoin & IWhere;
+type JoinReturn = IExpression & IJoin & IWhere;
+type WhereReturn = IExpression & IWhere & IGroupBy & IOrderBy & ILimit;
+type GroupByReturn = IExpression & IHaving & IOrderBy & ILimit;
+type HavingReturn = IExpression & IHaving & IOrderBy & ILimit;
+type OrderByReturn = IExpression & ILimit;
+type LimitReturn = IExpression;
+
+interface ISelect {
+    select(columns?: Array<TColumn>): SelectReturn;
+};
+
+interface IExplain {
+    explain(_explain?: boolean): ExplainReturn;
+}
+
+interface IDistinct {
+    distinct(_distinct?: boolean): DistinctReturn;
+}
+
+interface IFrom {
+    from(tables: TTable | Array<TTable>): FromReturn;
+};
+
+interface IJoin {
+    join(table: TTable, on: string): JoinReturn;
+    joinLeft(table: TTable, on: string): JoinReturn;
+    joinRight(table: TTable, on: string): JoinReturn;
+    joinInner(table: TTable, on: string): JoinReturn;
+    joinOuter(table: TTable, on: string): JoinReturn;
+};
+
+interface IWhere {
+    where(where: string | IExpression, params?: any): WhereReturn;
+    orWhere(where: string | IExpression, params?: any): WhereReturn;
+}
+
+interface IGroupBy {
+    groupBy(groups: string | string[]): GroupByReturn;
+}
+
+interface IHaving {
+    having(where: string | IExpression, params?: any): HavingReturn;
+    orHaving(where: string | IExpression, params?: any): HavingReturn;
+}
+
+interface IOrderBy {
+    orderBy(orders: string | string[]): OrderByReturn;
+}
+
+interface ILimit {
+    limit(limit: number, page?: number): LimitReturn;
 }
 
 class Expression implements IExpression {
@@ -270,39 +281,45 @@ class Select implements
         const havings = this.havings.map(v => v.buildExpression());
         const orderBys = this.orderBys.map(v => v.buildExpression());
 
-        return (
-            this._explain ? ['EXPLAIN'] : []
-        ).concat(
-            this._distinct ? ['DISTINCT'] : []
-        ).concat([
+        return ([
+            ...(!this._explain ? [] : ['EXPLAIN']),
+            ...(!this._distinct ? [] : ['DISTINCT']),
             'SELECT',
             columns.map(v => v[0]).join(', '),
-            'FROM',
-            fromTables.map(v => v[0]).join(', '),
+            ...(
+                !fromTables.length ? [] : [
+                    'FROM', fromTables.map(v => v[0]).join(', '),
+                ]
+            ),
             joins.map(v => v[0]).join(' '),
-            'WHERE',
-            wheres.map(v => v[0]).join(' '),
-        ]).concat(
-            this.groupBys.length === 0
-                ? []
-                : ['GROUP BY', groupBys.map(v => v[0]).join(',')],
-        ).concat(
-            this.havings.length === 0
-                ? []
-                : ['HAVING', havings.map(v => v[0]).join(', ')],
-        ).concat(
-            this.orderBys.length === 0
-                ? []
-                : ['ORDER BY', orderBys.map(v => v[0]).join(', ')],
-        ).concat(
-            !this._limit
-                ? []
-                : [
+            ...(
+                !wheres.length ? [] : [
+                    'WHERE', wheres.map(v => v[0]).join(' '),
+                ]
+            ),
+            ...(
+                !this.groupBys.length ? [] : [
+                    'GROUP BY', groupBys.map(v => v[0]).join(',')
+                ]
+            ),
+            ...(
+                !this.havings.length ? [] : [
+                    'HAVING', havings.map(v => v[0]).join(', ')
+                ]
+            ),
+            ...(
+                !this.orderBys.length ? [] : [
+                    'ORDER BY', orderBys.map(v => v[0]).join(', ')
+                ]
+            ),
+            ...(
+                !this._limit ? [] : [
                     'LIMIT',
                     this._limit.toString(),
                     this._page ? this._page.toString() : '0'
-                ],
-        ).join(' ');
+                ]
+            ),
+        ]).join(' ').trim();
     }
 
     buildExpression(): [string, Array<any>]
@@ -310,15 +327,15 @@ class Select implements
         return [this.getQuery(), this.getParams()];
     }
 
-    select(columns: Array<TColumn> = ['*']): IExplain & IDistinct & IFrom
+    select(columns: Array<TColumn> = ['*']): SelectReturn
     {
         columns.forEach(v => {
             this.columns.push(parseColumn(v));
         });
-        return this as (IExplain & IDistinct & IFrom);
+        return this;
     }
 
-    from(tables: TTable | Array<TTable>): IJoin & IWhere
+    from(tables: TTable | Array<TTable>): FromReturn
     {
         if (Array.isArray(tables)) {
             tables.forEach(v => {
@@ -328,47 +345,47 @@ class Select implements
             this.fromTables.push(parseTable(tables));
         }
 
-        return this as (IJoin & IWhere);
+        return this;
     }
 
-    join(table: TTable, on: string): IJoin & IWhere
+    join(table: TTable, on: string): JoinReturn
     {
         this.joins.push(
             new Join('INNER', table, on)
         );
-        return this as (IJoin & IWhere);
+        return this;
     }
 
-    joinLeft(table: TTable, on: string): IJoin & IWhere
+    joinLeft(table: TTable, on: string): JoinReturn
     {
         this.joins.push(
             new Join('LEFT', table, on)
         );
-        return this as (IJoin & IWhere);
+        return this;
     }
 
-    joinRight(table: TTable, on: string): IJoin & IWhere
+    joinRight(table: TTable, on: string): JoinReturn
     {
         this.joins.push(
             new Join('RIGHT', table, on)
         );
-        return this as (IJoin & IWhere);
+        return this;
     }
 
-    joinInner(table: TTable, on: string): IJoin & IWhere
+    joinInner(table: TTable, on: string): JoinReturn
     {
         return this.join(table, on);
     }
 
-    joinOuter(table: TTable, on: string): IJoin & IWhere
+    joinOuter(table: TTable, on: string): JoinReturn
     {
         this.joins.push(
             new Join('OUTER', table, on)
         );
-        return this as (IJoin & IWhere);
+        return this;
     }
 
-    where(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
+    where(where: string | IExpression, params?: any): WhereReturn
     {
         this.wheres.push(
             new Where(
@@ -377,10 +394,10 @@ class Select implements
                 params
             )
         );
-        return this as (IWhere & IGroupBy & IOrderBy & ILimit);
+        return this;
     }
 
-    orWhere(where: string | IExpression, params?: any): IWhere & IGroupBy & IOrderBy & ILimit
+    orWhere(where: string | IExpression, params?: any): WhereReturn
     {
         this.wheres.push(
             new Where(
@@ -389,10 +406,10 @@ class Select implements
                 params
             )
         );
-        return this as (IWhere & IGroupBy & IOrderBy & ILimit);
+        return this;
     }
 
-    groupBy(groups: string | string[]): IHaving & IOrderBy & ILimit
+    groupBy(groups: string | string[]): GroupByReturn
     {
         if (typeof groups === 'string') {
             this.groupBys.push(new Expression(groups));
@@ -401,10 +418,10 @@ class Select implements
                 groups.map(v => new Expression(v))
             );
         }
-        return this as (IHaving & IOrderBy & ILimit);
+        return this;
     }
 
-    having(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
+    having(where: string | IExpression, params?: any): HavingReturn
     {
         this.havings.push(
             new Where(
@@ -413,10 +430,10 @@ class Select implements
                 params
             )
         );
-        return this as (IHaving & IOrderBy & ILimit);
+        return this;
     }
 
-    orHaving(where: string | IExpression, params?: any): IHaving & IOrderBy & ILimit
+    orHaving(where: string | IExpression, params?: any): HavingReturn
     {
         this.havings.push(
             new Where(
@@ -425,10 +442,10 @@ class Select implements
                 params
             )
         );
-        return this as (IHaving & IOrderBy & ILimit);
+        return this;
     }
 
-    orderBy(orders: string | string[]): ILimit
+    orderBy(orders: string | string[]): OrderByReturn
     {
         if (typeof orders === 'string') {
             this.orderBys.push(new Expression(orders));
@@ -437,26 +454,26 @@ class Select implements
                 orders.map(v => new Expression(v))
             );
         }
-        return this as ILimit;
+        return this;
     }
 
-    limit(limit: number, page?: number): IExpression
+    limit(limit: number, page?: number): LimitReturn
     {
         this._limit = limit;
         this._page = page;
-        return this as IExpression;
+        return this;
     }
 
-    explain(_explain: boolean = true): IDistinct & IFrom
+    explain(_explain: boolean = true): ExplainReturn
     {
         this._explain = _explain;
-        return this as (IDistinct & IFrom);
+        return this;
     }
 
-    distinct(_distinct: boolean = true): IFrom
+    distinct(_distinct: boolean = true): DistinctReturn
     {
         this._distinct = _distinct;
-        return this as IFrom;
+        return this;
     }
 }
 
@@ -494,16 +511,22 @@ function isIExpression(val: unknown): val is IExpression {
         );
 }
 
+class QueryBuilder {
+    static select(columns: Array<TColumn> = ['*']): SelectReturn
+    {
+        const select = new Select();
+        return select.select(columns);
+    }
+}
 
-const membersSelect = new Select();
-membersSelect
+
+const membersSelect = QueryBuilder
     .select(['m.member_id'])
     .from({'m': 'members'})
     .where('m.member_id IN (?)', [1, 2, 3, 4])
     .where('m.active = ?', 1);
 
-const query = new Select();
-query
+const query = QueryBuilder
     .select([
         'u.*',
         {'org_unit': 'o.name'},
@@ -519,10 +542,25 @@ query
     .having('count(o.name) > ?', 1234);
 
 console.log(query.buildExpression());
-
 /**
  * [
  *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.member_id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?))) GROUP BY m.member_id HAVING (count(o.name) > ?)",
  *   [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1, 1234 ]
+ * ]
+ */
+
+
+console.log(
+    QueryBuilder.select([
+        'u.*',
+        {'org_unit': 'o.name'},
+        {'org_unit_id': 'o.id'},
+        {'org_level': "concat(o.scope, '-', o.level)"},
+    ]).explain(true).distinct(true).buildExpression()
+);
+/**
+ * [
+ *   "EXPLAIN DISTINCT SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level",
+ *   []
  * ]
  */
