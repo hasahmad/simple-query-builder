@@ -1,3 +1,4 @@
+
 type TColumn = IExpression | string | { [key: string]: IExpression | string };
 type TTable = IExpression | string | { [key: string]: IExpression | string };
 
@@ -102,27 +103,40 @@ class Where extends Expression
         super('', []);
 
         if (typeof where === 'string') {
-            this.setQuery([
-                whereJoiner,
-                (wrapBracket ? '(' : '')
-                + where
-                + (wrapBracket ? ')' : '')
-            ].join(' ').trim());
-            if (typeof params !== 'undefined') {
-                this.setParams([params]);
+            let whereQuery = where;
+            if (isIExpression(params)) {
+                const [_whereQuery, _whereParams] = params.buildExpression();
+                whereQuery = whereQuery.replace('{{?}}', _whereQuery);
+                this.setParams(_whereParams);
             }
-        } else {
-            const [whereQuery, whereParams] = where.buildExpression();
+
             this.setQuery([
                 whereJoiner,
                 (wrapBracket ? '(' : '')
                 + whereQuery
                 + (wrapBracket ? ')' : '')
             ].join(' ').trim());
-            this.setParams(whereParams);
-            if (typeof params !== 'undefined') {
-                this.setParams([params]);
+
+            if (typeof params === 'undefined'
+                || isIExpression(params)
+            ) {
+                return;
             }
+
+            this.setParams([params]);
+            return;
+        }
+
+        const [whereQuery, whereParams] = where.buildExpression();
+        this.setQuery([
+            whereJoiner,
+            (wrapBracket ? '(' : '')
+            + whereQuery
+            + (wrapBracket ? ')' : '')
+        ].join(' ').trim());
+        this.setParams(whereParams);
+        if (typeof params !== 'undefined') {
+            this.setParams([params]);
         }
     }
 }
@@ -388,9 +402,10 @@ function parseTable(table: TTable): Expression {
 }
 
 function isIExpression(val: any): val is IExpression {
-    return val.buildExpression && typeof val.buildExpression === 'function'
+    return (val.buildExpression && typeof val.buildExpression === 'function'
         && val.getQuery && typeof val.getQuery === 'function'
-        && val.getParams && typeof val.getParams === 'function';
+        && val.getParams && typeof val.getParams === 'function')
+        || (val instanceof Expression);
 }
 
 
@@ -413,11 +428,14 @@ query
     .join({'o': 'org_units'}, 'o.org_unit_id = u.org_unit_id')
     .where(new Where('', 'u.active = ?', 1, false))
     .where('u.date_joined >= ?', new Date(2021, 1, 1, 1, 1, 1))
-    .orWhere(membersSelect);
+    .orWhere('o.member_id in ({{?}})', membersSelect);
+
+console.log(query.buildExpression());
+
 /**
  * [
- * "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (SELECT m.id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?))",
- * [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1 ]
+ *   "SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level FROM users as u INNER JOIN org_units as o ON o.org_unit_id = u.org_unit_id WHERE (u.active = ?) AND (u.date_joined >= ?) OR (o.member_id in (SELECT m.id FROM members as m  WHERE (m.member_id IN (?)) AND (m.active = ?)))",
+ *   [ 1, 2021-02-01T06:01:01.000Z, [ 1, 2, 3, 4 ], 1 ]
  * ]
  *
  */
