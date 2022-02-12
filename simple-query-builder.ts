@@ -560,7 +560,7 @@ console.log(
 );
 /**
  * [
- *   "EXPLAIN DISTINCT SELECT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level",
+ *   "EXPLAIN SELECT DISTINCT u.*, o.name as org_unit, o.id as org_unit_id, concat(o.scope, '-', o.level) as org_level",
  *   []
  * ]
  */
