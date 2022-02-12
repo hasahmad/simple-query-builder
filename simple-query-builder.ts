@@ -283,8 +283,8 @@ class Select implements
 
         return ([
             ...(!this._explain ? [] : ['EXPLAIN']),
-            ...(!this._distinct ? [] : ['DISTINCT']),
             'SELECT',
+            ...(!this._distinct ? [] : ['DISTINCT']),
             columns.map(v => v[0]).join(', '),
             ...(
                 !fromTables.length ? [] : [
