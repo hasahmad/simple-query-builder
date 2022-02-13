@@ -7,47 +7,35 @@ import Join from './Join';
 import Where from './Where';
 import { isIExpression } from "./utils";
 
-export type IData = Array<any> | IExpression;
+export type IData = Array<{[key: string]: any}> | IExpression;
 
 export default class Insert implements IExpression {
   protected table!: string;
   protected columns: string[];
-  protected data!: IData;
   protected joins: Expression[];
   protected wheres: Expression[];
+  protected _dataQuery!: string;
+  protected _dataParams: Array<any | Array<any>>;
 
   constructor() {
     this.columns = [];
     this.joins = [];
     this.wheres = [];
+    this._dataParams = [];
   }
 
   getParams(): any[] {
-    let data = [];
-    if (isIExpression(this.data)) {
-      data = this.data.getParams();
-    } else {
-      data.push(this.data);
-    }
-
     const joins = this.joins.map(v => v.buildExpression());
     const wheres = this.wheres.map(v => v.buildExpression());
 
     return [
-      ...data,
+      ...this._dataParams,
       ...joins.reduce((acc: any[], v: [string, any[]]) => [...acc, ...v[1]], []),
       ...wheres.reduce((acc: any[], v: [string, any[]]) => [...acc, ...v[1]], []),
     ];
   }
 
   getQuery(): string {
-    let data = '';
-    if (isIExpression(this.data)) {
-      data = this.data.getQuery();
-    } else {
-      data = '?';
-    }
-
     const joins = this.joins.map(v => v.buildExpression());
     const wheres = this.wheres.map(v => v.buildExpression());
 
@@ -57,7 +45,7 @@ export default class Insert implements IExpression {
       this.table,
       ...(!this.columns.length ? [] : [`(${this.columns.join(',')})`]),
       'VALUES',
-      `(${data})`,
+      this._dataQuery,
       joins.map(v => v[0]).join(' '),
       ...(!this.wheres.length ? [] : [
         'WHERE', wheres.map(v => v[0]).join(' '),
@@ -76,7 +64,31 @@ export default class Insert implements IExpression {
   }
 
   values(data: IData) {
-    this.data = data;
+    if (isIExpression(data)) {
+      this._dataQuery = `(${data.getQuery()})`;
+      this._dataParams = data.getParams();
+    } else {
+      if (!this.columns.length) {
+        this.columns = Object.keys(data[0]);
+      }
+
+      this._dataQuery = '('
+        + data.map(
+            () => (new Array(this.columns.length)).fill('?').join(',')
+          ).join('),(')
+        + ')'
+
+      this._dataParams = data
+        .map(v => {
+          const val: any[] = [];
+          this.columns.forEach(k => {
+            val.push(v[k]);
+          })
+          return val;
+        })
+        .reduce((acc, v) => ([...acc, ...v]), []);
+    }
+
     return this;
   }
 

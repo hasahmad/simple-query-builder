@@ -69,12 +69,12 @@ console.log({
  */
 
  const insertQuery = QueryBuilder
- .insert('users', ['user_id', 'username', 'email'])
+ .insert('users')
  .values([
-     [1, 'user1', 'user1@gmail.com'],
-     [2, 'user2', 'user2@gmail.com'],
-     [3, 'user3', 'user3@gmail.com'],
-     [4, 'user4', 'user4@gmail.com'],
+     {user_id: 1, username: 'user1', email: 'user1@gmail.com'},
+     {user_id: 2, username: 'user2', email: 'user2@gmail.com'},
+     {user_id: 3, username: 'user3', email: 'user3@gmail.com'},
+     {user_id: 4, username: 'user4', email: 'user4@gmail.com'},
  ])
  .join({'o': 'org_units'}, 'o.org_unit_id = u.org_unit_id')
  .where(new Where('', 'u.active = ?', 1, false))
