@@ -68,3 +68,26 @@ console.log({
  * }
  */
 
+ const insertQuery = QueryBuilder
+ .insert('users', ['user_id', 'username', 'email'])
+ .values([
+     [1, 'user1', 'user1@gmail.com'],
+     [2, 'user2', 'user2@gmail.com'],
+     [3, 'user3', 'user3@gmail.com'],
+     [4, 'user4', 'user4@gmail.com'],
+ ])
+ .join({'o': 'org_units'}, 'o.org_unit_id = u.org_unit_id')
+ .where(new Where('', 'u.active = ?', 1, false))
+ .where('u.date_joined >= ?', new Date(2021, 1, 1, 1, 1, 1))
+ .orWhere('o.member_id in ({{?}})', membersSelect);
+
+console.log(insertQuery.buildExpression());
+
+const insertQuery2 = QueryBuilder
+.insert('users', ['user_id', 'username', 'email'])
+.values(membersSelect)
+.join({'o': 'org_units'}, 'o.org_unit_id = u.org_unit_id')
+.where(new Where('', 'u.active = ?', 1, false))
+.where('u.date_joined >= ?', new Date(2021, 1, 1, 1, 1, 1));
+
+console.log(insertQuery2.buildExpression());

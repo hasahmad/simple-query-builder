@@ -1,5 +1,6 @@
 import Expression from "./Expression";
-import { TTable, IExpression } from "./types";
+import { IExpression } from "./types";
+import { isIExpression } from "./utils";
 
 export default class Where extends Expression {
   constructor(

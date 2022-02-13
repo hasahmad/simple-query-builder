@@ -1,4 +1,5 @@
 import Select from "./Select";
+import Insert from "./Insert";
 import { SelectReturn, TColumn } from "./types";
 
 export default class QueryBuilder {
@@ -6,5 +7,11 @@ export default class QueryBuilder {
   {
       const select = new Select();
       return select.select(columns);
+  }
+
+  static insert(table: string, columns: string[] = [])
+  {
+      const insert = new Insert();
+      return insert.into(table, columns);
   }
 }

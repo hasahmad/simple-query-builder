@@ -22,6 +22,8 @@ export type HavingReturn = IExpression & IHaving & IOrderBy & ILimit;
 export type OrderByReturn = IExpression & ILimit;
 export type LimitReturn = IExpression;
 
+export type IntoReturn = IExpression & IJoin & IWhere;
+
 export interface ISelect {
   select(columns?: Array<TColumn>): SelectReturn;
 };

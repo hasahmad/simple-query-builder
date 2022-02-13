@@ -1,5 +1,6 @@
 import Expression from "./Expression";
 import { TTable, IExpression } from "./types";
+import { parseColumn } from "./utils";
 
 export default class Join extends Expression {
   constructor(
