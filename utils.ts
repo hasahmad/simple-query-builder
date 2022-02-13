@@ -36,13 +36,16 @@ export function isIExpression(val: unknown): val is IExpression {
     );
 }
 
-export 
+function isDate(value: any): value is Date {
+  return value instanceof Date && Object.prototype.toString.call(value) === '[object Date]';
+}
 
-function parseValue(value: any, raw: boolean = false, type: string | null = null): string {
+export function parseValue(value: any, raw: boolean = false, type: string | null = null): string {
     if (raw) {
         return `${value}`;
     }
 
+    const _isDate = (type === 'date') || (!type && isDate(value));
     const isNull = (type === 'null') || (!type && value === null) || value === 'NULL' || value === 'null';
     const isString = (type === 'string') || (!type && typeof value === 'string');
     const isBool = (type === 'boolean') || (!type && typeof value === 'boolean');
@@ -57,6 +60,10 @@ function parseValue(value: any, raw: boolean = false, type: string | null = null
         return `${value}`;
     }
 
+    if (_isDate && typeof value.toISOString === 'function') {
+      return `'${value.toISOString()}'`;
+    }
+
     if (isString) {
         return `'${value}'`;
     }
@@ -67,7 +74,7 @@ function parseValue(value: any, raw: boolean = false, type: string | null = null
 
     if (isArray) {
         return (value as TValue[]).map((v: TValue) => {
-            if (v && typeof v === 'object' && !Array.isArray(v)) {
+            if (v && typeof v === 'object' && !Array.isArray(v) && !isDate(v)) {
                 return parseValue(v.value || v, v.raw || false, v.type);
             }
 

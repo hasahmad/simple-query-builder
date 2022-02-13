@@ -47,7 +47,7 @@ console.log(
  * ]
  */
 
-console.log({
+console.log('parseValue', {
     1: parseValue(1),
     '2': parseValue('2'),
     'str': parseValue('str'),
@@ -55,6 +55,7 @@ console.log({
     '["he","ll","o",100,238]': parseValue(["he","ll","o",100,238]),
     '["he","ll","o",{value: 100, type: "string"},238]': parseValue(["he","ll","o",{value: 100, type: "string"},238]),
     'string with type array': parseValue('[1,2,3,]', false, 'array'),
+    'new Date()': parseValue(new Date()),
 })
 /**
  * {

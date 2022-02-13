@@ -71,9 +71,10 @@ export interface ILimit {
 }
 
 export type TValue = string
+  | Date
   | number
   | boolean
   | { value: any, raw?: boolean, type?: string }
   | null
-  | Array<TValue | { value: any, raw?: boolean, type?: string }>
+  | Array<TValue>
 
